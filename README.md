@@ -37,6 +37,15 @@ GitHub contributions visualized as animated fireworks. More commits = bigger fir
 | 4 | 16-29 | On Fire | 5 continuous fireworks |
 | 5 | 30+ | Legendary | 9 fireworks with special effects |
 
+## Private Repositories
+
+This tool uses the same data as GitHub's contribution graph.
+
+- **Default**: Only public repository contributions are counted
+- **Include private contributions**: Enable in GitHub Settings → Profile → "Include private contributions on my profile"
+
+When enabled, only the **commit count** is retrieved - repository names and commit details remain private.
+
 ## API
 
 ### GET /api/fireworks
