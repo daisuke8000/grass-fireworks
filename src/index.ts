@@ -12,6 +12,22 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+// Cache helper: Check cache and return if hit
+async function getCachedResponse(request: Request): Promise<Response | undefined> {
+  const cache = caches.default;
+  return await cache.match(request);
+}
+
+// Cache helper: Store response in edge cache
+function cacheResponse(
+  ctx: ExecutionContext,
+  request: Request,
+  response: Response
+): void {
+  const cache = caches.default;
+  ctx.waitUntil(cache.put(request, response.clone()));
+}
+
 // Health check endpoint
 app.get('/', (c) => {
   return c.json({ status: 'ok', service: 'grass-fireworks' });
@@ -40,6 +56,10 @@ export const demoQuerySchema = z.object({
   height: z.coerce.number().int().min(MIN_HEIGHT).max(MAX_HEIGHT).optional().default(DEFAULT_HEIGHT),
 });
 
+// Cache TTL constants
+const CACHE_TTL_FIREWORKS = 3600; // 1 hour
+const CACHE_TTL_DEMO = 31536000; // 1 year
+
 // GET /api/fireworks - Main endpoint
 app.get(
   '/api/fireworks',
@@ -49,6 +69,14 @@ app.get(
     }
   }),
   async (c) => {
+    const request = c.req.raw;
+
+    // Check edge cache first
+    const cached = await getCachedResponse(request);
+    if (cached) {
+      return cached;
+    }
+
     const { user, width, height } = c.req.valid('query');
     const token = c.env.GITHUB_TOKEN;
 
@@ -74,7 +102,7 @@ app.get(
       });
       return c.body(svg, 200, {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=300',
+        'Cache-Control': `public, max-age=${CACHE_TTL_FIREWORKS}`,
       });
     }
 
@@ -92,10 +120,18 @@ app.get(
       height,
     });
 
-    return c.body(svg, 200, {
-      'Content-Type': 'image/svg+xml',
-      'Cache-Control': 'public, max-age=300',
+    const response = new Response(svg, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': `public, max-age=${CACHE_TTL_FIREWORKS}`,
+      },
     });
+
+    // Store in edge cache
+    cacheResponse(c.executionCtx, request, response);
+
+    return response;
   }
 );
 
@@ -107,7 +143,15 @@ app.get(
       return c.json({ error: 'Invalid parameters' }, 400);
     }
   }),
-  (c) => {
+  async (c) => {
+    const request = c.req.raw;
+
+    // Check edge cache first
+    const cached = await getCachedResponse(request);
+    if (cached) {
+      return cached;
+    }
+
     const { commits, user, width, height } = c.req.valid('query');
     const displayName = user || 'demo';
 
@@ -124,10 +168,18 @@ app.get(
       height,
     });
 
-    return c.body(svg, 200, {
-      'Content-Type': 'image/svg+xml',
-      'Cache-Control': 'no-cache',
+    const response = new Response(svg, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': `public, max-age=${CACHE_TTL_DEMO}, immutable`,
+      },
     });
+
+    // Store in edge cache
+    cacheResponse(c.executionCtx, request, response);
+
+    return response;
   }
 );
 

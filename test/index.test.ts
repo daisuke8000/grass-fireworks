@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import app from '../src/index';
+import { SELF } from 'cloudflare:test';
 import { calculateLevel, getLevelName } from '../src/services/fireworks-level';
 import { generateFireworksSVG } from '../src/generators/svg-generator';
 
@@ -84,12 +84,12 @@ describe('Grass Fireworks', () => {
 
   describe('API Endpoints', () => {
     it('GET /api/fireworks should require user parameter', async () => {
-      const res = await app.request('/api/fireworks');
+      const res = await SELF.fetch('http://localhost/api/fireworks');
       expect(res.status).toBe(400);
     });
 
     it('GET /api/demo should return SVG', async () => {
-      const res = await app.request('/api/demo?commits=10');
+      const res = await SELF.fetch('http://localhost/api/demo?commits=10');
       expect(res.status).toBe(200);
       expect(res.headers.get('Content-Type')).toContain('image/svg+xml');
 
@@ -99,7 +99,7 @@ describe('Grass Fireworks', () => {
     });
 
     it('GET /api/demo should support width/height parameters', async () => {
-      const res = await app.request('/api/demo?commits=10&width=600&height=300');
+      const res = await SELF.fetch('http://localhost/api/demo?commits=10&width=600&height=300');
       expect(res.status).toBe(200);
 
       const svg = await res.text();
@@ -107,7 +107,7 @@ describe('Grass Fireworks', () => {
     });
 
     it('GET /api/demo should validate parameter ranges', async () => {
-      const res = await app.request('/api/demo?commits=10&width=1000');
+      const res = await SELF.fetch('http://localhost/api/demo?commits=10&width=1000');
       expect(res.status).toBe(400);
     });
   });
