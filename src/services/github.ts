@@ -111,20 +111,12 @@ export function createGitHubService(token: string, options?: GitHubServiceOption
           };
         }
 
-        // Find today's contributions (UTC-based)
-        const today = new Date().toISOString().split('T')[0];
+        // Find today's contributions (use latest date from GitHub, respects user's timezone)
         const weeks = json.data.user.contributionsCollection.contributionCalendar.weeks;
+        const lastWeek = weeks[weeks.length - 1];
+        const lastDay = lastWeek.contributionDays[lastWeek.contributionDays.length - 1];
 
-        for (const week of weeks) {
-          for (const day of week.contributionDays) {
-            if (day.date === today) {
-              return { ok: true, value: day.contributionCount };
-            }
-          }
-        }
-
-        // No contributions today
-        return { ok: true, value: 0 };
+        return { ok: true, value: lastDay.contributionCount };
       } catch (error) {
         // Handle abort/timeout specifically
         if (error instanceof Error && error.name === 'AbortError') {
