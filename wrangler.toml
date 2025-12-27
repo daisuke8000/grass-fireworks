@@ -1,0 +1,13 @@
+name = "grass-fireworks"
+main = "src/index.ts"
+compatibility_date = "2024-12-18"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Non-sensitive environment variables can be set here
+# GITHUB_TOKEN should be set as a secret using:
+# wrangler secret put GITHUB_TOKEN
+
+# Development overrides
+[env.dev]
+name = "grass-fireworks-dev"
