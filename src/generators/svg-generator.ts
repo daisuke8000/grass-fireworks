@@ -12,20 +12,7 @@ import type { ThemeName } from '../services/theme-selector';
 import { CANVAS } from '../constants';
 import { generateNightSky } from './svg-background';
 import { generateUserOverlay } from './svg-overlay';
-import {
-  generateKataLevel1,
-  generateKataLevel2,
-  generateKataLevel3,
-  generateKataLevel4,
-  generateKataLevel5,
-} from './themes/kata-levels';
-import {
-  generateMatsuriLevel1,
-  generateMatsuriLevel2,
-  generateMatsuriLevel3,
-  generateMatsuriLevel4,
-  generateMatsuriLevel5,
-} from './themes/matsuri-levels';
+import { generateFirework, type LevelConfig } from './registry';
 import { generateBackgroundFireworks, generateNiagaraEffect } from './svg-firework-parts';
 
 export interface FireworksSVGConfig {
@@ -47,57 +34,9 @@ export interface FireworksSVGConfig {
   isExtra?: boolean;
 }
 
-interface LevelConfig {
-  canvasWidth: number;
-  canvasHeight: number;
-}
-
-/**
- * Generates the firework animation for Kata theme
- */
-function generateKataFirework(level: FireworksLevel, config: LevelConfig): string {
-  switch (level) {
-    case 0:
-      return ''; // Level 0: Silent night, no fireworks
-    case 1:
-      return generateKataLevel1(config);
-    case 2:
-      return generateKataLevel2(config);
-    case 3:
-      return generateKataLevel3(config);
-    case 4:
-      return generateKataLevel4(config);
-    case 5:
-      return generateKataLevel5(config);
-    default:
-      return '';
-  }
-}
-
-/**
- * Generates the firework animation for Matsuri theme
- */
-function generateMatsuriFirework(level: FireworksLevel, config: LevelConfig): string {
-  switch (level) {
-    case 0:
-      return ''; // Level 0: Silent night, no fireworks
-    case 1:
-      return generateMatsuriLevel1(config);
-    case 2:
-      return generateMatsuriLevel2(config);
-    case 3:
-      return generateMatsuriLevel3(config);
-    case 4:
-      return generateMatsuriLevel4(config);
-    case 5:
-      return generateMatsuriLevel5(config);
-    default:
-      return '';
-  }
-}
-
 /**
  * Generates the firework animation for a specific level and theme
+ * Uses the theme registry for O(1) lookup instead of switch statements
  */
 function generateFireworkForLevel(
   level: FireworksLevel,
@@ -110,11 +49,7 @@ function generateFireworkForLevel(
     canvasHeight: height,
   };
 
-  if (theme === 'matsuri') {
-    return generateMatsuriFirework(level, config);
-  }
-  // Default to kata
-  return generateKataFirework(level, config);
+  return generateFirework(theme, level, config);
 }
 
 /**
