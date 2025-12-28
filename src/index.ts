@@ -2,8 +2,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { createGitHubService } from './services/github';
-import { calculateLevel, getLevelName } from './services/fireworks-level';
+import { calculateLevel, getLevelName, type FireworksLevel } from './services/fireworks-level';
 import { generateFireworksSVG } from './generators/svg-generator';
+import { selectThemeByDate, isValidTheme, type ThemeName } from './services/theme-selector';
 
 // Environment type definition
 type Bindings = {
@@ -46,19 +47,35 @@ export const fireworksQuerySchema = z.object({
   user: z.string().min(1, 'user parameter is required'),
   width: z.coerce.number().int().min(MIN_WIDTH).max(MAX_WIDTH).optional().default(DEFAULT_WIDTH),
   height: z.coerce.number().int().min(MIN_HEIGHT).max(MAX_HEIGHT).optional().default(DEFAULT_HEIGHT),
+  theme: z.string().optional(),
 });
 
 // Demo endpoint schema
 export const demoQuerySchema = z.object({
   commits: z.coerce.number().int().min(0).optional().default(8),
+  level: z.coerce.number().int().min(0).max(5).optional(),
   user: z.string().optional(),
   width: z.coerce.number().int().min(MIN_WIDTH).max(MAX_WIDTH).optional().default(DEFAULT_WIDTH),
   height: z.coerce.number().int().min(MIN_HEIGHT).max(MAX_HEIGHT).optional().default(DEFAULT_HEIGHT),
+  theme: z.string().optional(),
 });
 
 // Cache TTL constants
 const CACHE_TTL_FIREWORKS = 3600; // 1 hour
 const CACHE_TTL_DEMO = 31536000; // 1 year
+
+/**
+ * Resolves theme from query parameter
+ * - If specified and valid: use that theme
+ * - If 'auto' or not specified: use daily theme selection
+ */
+function resolveTheme(themeParam: string | undefined): ThemeName {
+  if (themeParam && isValidTheme(themeParam)) {
+    return themeParam;
+  }
+  // Default: daily theme selection
+  return selectThemeByDate();
+}
 
 // GET /api/fireworks - Main endpoint
 app.get(
@@ -77,8 +94,9 @@ app.get(
       return cached;
     }
 
-    const { user, width, height } = c.req.valid('query');
+    const { user, width, height, theme: themeParam } = c.req.valid('query');
     const token = c.env.GITHUB_TOKEN;
+    const theme = resolveTheme(themeParam);
 
     // Create GitHub service and fetch contributions
     const githubService = createGitHubService(token);
@@ -91,7 +109,7 @@ app.get(
       }
       // API_ERROR: Fallback to Level 0 (silent night)
       const level = 0;
-      const levelName = getLevelName(level);
+      const levelName = getLevelName(level, theme);
       const svg = generateFireworksSVG({
         username: user,
         commits: 0,
@@ -99,6 +117,7 @@ app.get(
         levelName,
         width,
         height,
+        theme,
       });
       return c.body(svg, 200, {
         'Content-Type': 'image/svg+xml',
@@ -109,7 +128,7 @@ app.get(
     // Success: Generate fireworks based on contribution count
     const commits = result.value;
     const level = calculateLevel(commits);
-    const levelName = getLevelName(level);
+    const levelName = getLevelName(level, theme);
 
     const svg = generateFireworksSVG({
       username: user,
@@ -118,6 +137,7 @@ app.get(
       levelName,
       width,
       height,
+      theme,
     });
 
     const response = new Response(svg, {
@@ -152,12 +172,13 @@ app.get(
       return cached;
     }
 
-    const { commits, user, width, height } = c.req.valid('query');
+    const { commits, level: levelParam, user, width, height, theme: themeParam } = c.req.valid('query');
     const displayName = user || 'demo';
+    const theme = resolveTheme(themeParam);
 
-    // Calculate level and generate SVG directly (no GitHub API)
-    const level = calculateLevel(commits);
-    const levelName = getLevelName(level);
+    // Use explicit level if provided, otherwise calculate from commits
+    const level = (levelParam !== undefined ? levelParam : calculateLevel(commits)) as FireworksLevel;
+    const levelName = getLevelName(level, theme);
 
     const svg = generateFireworksSVG({
       username: displayName,
@@ -166,6 +187,7 @@ app.get(
       levelName,
       width,
       height,
+      theme,
     });
 
     const response = new Response(svg, {
