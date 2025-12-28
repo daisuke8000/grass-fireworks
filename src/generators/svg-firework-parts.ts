@@ -11,6 +11,7 @@
  */
 
 import { FIREWORK_COLORS, type FireworkColorName } from '../constants';
+import { createSeededRandom } from '../utils/random';
 
 // Re-export for backwards compatibility
 export { FIREWORK_COLORS, type FireworkColorName };
@@ -570,16 +571,6 @@ export interface BackgroundFireworksConfig {
   seed?: number;
 }
 
-/**
- * Simple seeded random for reproducible "random" positions
- */
-function seededRandom(seed: number): () => number {
-  let s = seed;
-  return () => {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    return s / 0x7fffffff;
-  };
-}
 
 /**
  * Generates small background fireworks for ambient effect
@@ -587,7 +578,7 @@ function seededRandom(seed: number): () => number {
  */
 export function generateBackgroundFireworks(config: BackgroundFireworksConfig): string {
   const { canvasWidth, canvasHeight, count, loopDuration, seed = 42 } = config;
-  const random = seededRandom(seed);
+  const random = createSeededRandom(seed);
 
   const colors: FireworkColorName[] = ['blue', 'purple', 'cyan', 'pink', 'green'];
   const elements: string[] = [];
@@ -683,7 +674,7 @@ export interface NiagaraEffectConfig {
  */
 export function generateNiagaraEffect(config: NiagaraEffectConfig): string {
   const { canvasWidth, canvasHeight, loopDuration, seed = 42 } = config;
-  const random = seededRandom(seed);
+  const random = createSeededRandom(seed);
 
   // Select color pattern (random if not specified)
   const patternName = config.colorPattern ?? NIAGARA_PATTERN_NAMES[Math.floor(random() * NIAGARA_PATTERN_NAMES.length)];

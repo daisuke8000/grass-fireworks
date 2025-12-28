@@ -5,6 +5,7 @@
 
 import type { FireworksLevel } from '../services/fireworks-level';
 import { CANVAS, STARS } from '../constants';
+import { createSeededRandom, stringToSeed } from '../utils/random';
 
 // Gradient colors
 const GRADIENT_TOP = '#0d1117';
@@ -22,32 +23,6 @@ export interface NightSkyConfig {
   username?: string;
   width?: number;
   height?: number;
-}
-
-/**
- * Simple seeded random number generator (mulberry32)
- * Provides deterministic random values for consistent star positions
- */
-function seededRandom(seed: number): () => number {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/**
- * Converts a string to a numeric seed for random generation
- */
-function stringToSeed(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return Math.abs(hash);
 }
 
 /**
@@ -77,7 +52,7 @@ export function generateStars(config: StarConfig = {}): string {
     height = CANVAS.DEFAULT_HEIGHT,
   } = config;
   const starCount = isLegendary ? STARS.LEGENDARY_COUNT : STARS.DEFAULT_COUNT;
-  const random = seededRandom(seed);
+  const random = createSeededRandom(seed);
 
   const stars: string[] = [];
 

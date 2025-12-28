@@ -96,7 +96,9 @@ function generateSparklerEffect(config: {
 
   for (let i = 0; i < particleCount; i++) {
     const angle = (2 * Math.PI * i) / particleCount;
-    const distance = maxDistance * (0.6 + Math.random() * 0.4);
+    // Deterministic variation based on particle index (0.6-1.0 range)
+    const distanceVariation = 0.6 + 0.4 * ((i * 7 + 3) % 10) / 10;
+    const distance = maxDistance * distanceVariation;
     const dx = Math.round(Math.cos(angle) * distance);
     const dy = Math.round(Math.sin(angle) * distance);
     const twinkleOffset = (i * 0.15) / loopInterval;
