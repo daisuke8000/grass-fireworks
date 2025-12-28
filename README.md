@@ -4,7 +4,7 @@ GitHub contributions visualized as animated fireworks. More commits = bigger fir
 
 | Kata (型) | Matsuri (祭) |
 |:---------:|:------------:|
-| ![Kata](https://grass-fireworks.dsk8.workers.dev/api/demo?level=5&theme=kata&extra=true) | ![Matsuri](https://grass-fireworks.dsk8.workers.dev/api/demo?level=5&theme=matsuri&extra=true) |
+| ![Kata](https://grass-fireworks.dsk8.workers.dev/api/demo?level=5&theme=kata) | ![Matsuri](https://grass-fireworks.dsk8.workers.dev/api/demo?level=5&theme=matsuri) |
 
 ## Features
 
