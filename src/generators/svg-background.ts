@@ -4,16 +4,7 @@
  */
 
 import type { FireworksLevel } from '../services/fireworks-level';
-
-// Default canvas dimensions
-const DEFAULT_WIDTH = 400;
-const DEFAULT_HEIGHT = 200;
-
-// Star configuration
-const DEFAULT_STAR_COUNT = 25;
-const LEGENDARY_STAR_COUNT = 35;
-const STAR_COLOR = '#8b949e';
-const STAR_RADIUS = 2;
+import { CANVAS, STARS } from '../constants';
 
 // Gradient colors
 const GRADIENT_TOP = '#0d1117';
@@ -63,8 +54,8 @@ function stringToSeed(str: string): number {
  * Generates the gradient background SVG elements
  */
 export function generateBackground(
-  width: number = DEFAULT_WIDTH,
-  height: number = DEFAULT_HEIGHT
+  width: number = CANVAS.DEFAULT_WIDTH,
+  height: number = CANVAS.DEFAULT_HEIGHT
 ): string {
   return `<defs>
     <linearGradient id="nightSkyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -82,10 +73,10 @@ export function generateStars(config: StarConfig = {}): string {
   const {
     isLegendary = false,
     seed = Date.now(),
-    width = DEFAULT_WIDTH,
-    height = DEFAULT_HEIGHT,
+    width = CANVAS.DEFAULT_WIDTH,
+    height = CANVAS.DEFAULT_HEIGHT,
   } = config;
-  const starCount = isLegendary ? LEGENDARY_STAR_COUNT : DEFAULT_STAR_COUNT;
+  const starCount = isLegendary ? STARS.LEGENDARY_COUNT : STARS.DEFAULT_COUNT;
   const random = seededRandom(seed);
 
   const stars: string[] = [];
@@ -95,7 +86,7 @@ export function generateStars(config: StarConfig = {}): string {
     const cy = Math.floor(random() * height);
     const beginTime = (random() * 2).toFixed(1); // Stagger animation start 0-2s
 
-    stars.push(`<circle cx="${cx}" cy="${cy}" r="${STAR_RADIUS}" fill="${STAR_COLOR}">
+    stars.push(`<circle cx="${cx}" cy="${cy}" r="${STARS.RADIUS}" fill="${STARS.COLOR}">
       <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" begin="${beginTime}s" repeatCount="indefinite" />
     </circle>`);
   }
@@ -110,8 +101,8 @@ export function generateNightSky(config: NightSkyConfig): string {
   const {
     level,
     username = 'default',
-    width = DEFAULT_WIDTH,
-    height = DEFAULT_HEIGHT,
+    width = CANVAS.DEFAULT_WIDTH,
+    height = CANVAS.DEFAULT_HEIGHT,
   } = config;
   const isLegendary = level === 5;
   const seed = stringToSeed(username);

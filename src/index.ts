@@ -5,6 +5,7 @@ import { createGitHubService } from './services/github';
 import { calculateLevel, getLevelName, isExtraTriggered, type FireworksLevel } from './services/fireworks-level';
 import { generateFireworksSVG } from './generators/svg-generator';
 import { selectThemeByDate, isValidTheme, type ThemeName } from './services/theme-selector';
+import { CANVAS, CACHE } from './constants';
 
 // Environment type definition
 type Bindings = {
@@ -34,19 +35,11 @@ app.get('/', (c) => {
   return c.json({ status: 'ok', service: 'grass-fireworks' });
 });
 
-// Size constraints
-const MIN_WIDTH = 200;
-const MAX_WIDTH = 800;
-const MIN_HEIGHT = 100;
-const MAX_HEIGHT = 400;
-const DEFAULT_WIDTH = 400;
-const DEFAULT_HEIGHT = 200;
-
 // Main fireworks endpoint schema
 export const fireworksQuerySchema = z.object({
   user: z.string().min(1, 'user parameter is required'),
-  width: z.coerce.number().int().min(MIN_WIDTH).max(MAX_WIDTH).optional().default(DEFAULT_WIDTH),
-  height: z.coerce.number().int().min(MIN_HEIGHT).max(MAX_HEIGHT).optional().default(DEFAULT_HEIGHT),
+  width: z.coerce.number().int().min(CANVAS.MIN_WIDTH).max(CANVAS.MAX_WIDTH).optional().default(CANVAS.DEFAULT_WIDTH),
+  height: z.coerce.number().int().min(CANVAS.MIN_HEIGHT).max(CANVAS.MAX_HEIGHT).optional().default(CANVAS.DEFAULT_HEIGHT),
   theme: z.string().optional(),
 });
 
@@ -55,15 +48,11 @@ export const demoQuerySchema = z.object({
   commits: z.coerce.number().int().min(0).optional().default(8),
   level: z.coerce.number().int().min(0).max(5).optional(),
   user: z.string().optional(),
-  width: z.coerce.number().int().min(MIN_WIDTH).max(MAX_WIDTH).optional().default(DEFAULT_WIDTH),
-  height: z.coerce.number().int().min(MIN_HEIGHT).max(MAX_HEIGHT).optional().default(DEFAULT_HEIGHT),
+  width: z.coerce.number().int().min(CANVAS.MIN_WIDTH).max(CANVAS.MAX_WIDTH).optional().default(CANVAS.DEFAULT_WIDTH),
+  height: z.coerce.number().int().min(CANVAS.MIN_HEIGHT).max(CANVAS.MAX_HEIGHT).optional().default(CANVAS.DEFAULT_HEIGHT),
   theme: z.string().optional(),
   extra: z.enum(['true', 'false', '1', '0']).optional(),
 });
-
-// Cache TTL constants
-const CACHE_TTL_FIREWORKS = 3600; // 1 hour
-const CACHE_TTL_DEMO = 31536000; // 1 year
 
 /**
  * Resolves theme from query parameter
@@ -122,7 +111,7 @@ app.get(
       });
       return c.body(svg, 200, {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': `public, max-age=${CACHE_TTL_FIREWORKS}`,
+        'Cache-Control': `public, max-age=${CACHE.TTL_FIREWORKS}`,
       });
     }
 
@@ -147,7 +136,7 @@ app.get(
       status: 200,
       headers: {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': `public, max-age=${CACHE_TTL_FIREWORKS}`,
+        'Cache-Control': `public, max-age=${CACHE.TTL_FIREWORKS}`,
       },
     });
 
@@ -201,7 +190,7 @@ app.get(
       status: 200,
       headers: {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': `public, max-age=${CACHE_TTL_DEMO}, immutable`,
+        'Cache-Control': `public, max-age=${CACHE.TTL_DEMO}, immutable`,
       },
     });
 

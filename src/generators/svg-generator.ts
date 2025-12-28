@@ -9,6 +9,7 @@
 
 import type { FireworksLevel } from '../services/fireworks-level';
 import type { ThemeName } from '../services/theme-selector';
+import { CANVAS } from '../constants';
 import { generateNightSky } from './svg-background';
 import { generateUserOverlay } from './svg-overlay';
 import {
@@ -26,10 +27,6 @@ import {
   generateMatsuriLevel5,
 } from './themes/matsuri-levels';
 import { generateBackgroundFireworks, generateNiagaraEffect } from './svg-firework-parts';
-
-// Default canvas dimensions
-const DEFAULT_WIDTH = 400;
-const DEFAULT_HEIGHT = 200;
 
 export interface FireworksSVGConfig {
   /** GitHub username */
@@ -134,8 +131,8 @@ export function generateFireworksSVG(config: FireworksSVGConfig): string {
     commits,
     level,
     levelName,
-    width = DEFAULT_WIDTH,
-    height = DEFAULT_HEIGHT,
+    width = CANVAS.DEFAULT_WIDTH,
+    height = CANVAS.DEFAULT_HEIGHT,
     theme,
     isExtra = false,
   } = config;

@@ -10,31 +10,10 @@
  * - Enhanced glow effects
  */
 
-/**
- * Color palette for fireworks
- * Includes GitHub contribution colors + Japanese traditional firework colors
- */
-export const FIREWORK_COLORS = {
-  // GitHub contribution colors
-  green: '#39d353',
-  blue: '#58a6ff',
-  purple: '#bc8cff',
-  orange: '#f0883e',
-  pink: '#f778ba',
-  yellow: '#d29922',
-  cyan: '#39c5cf',
-  red: '#f85149',
-  // Japanese traditional firework colors (和火・伝統色)
-  gold: '#ffd700',
-  silver: '#c0c0c0',
-  wabi: '#cd5c5c',
-  sakura: '#ffb7c5',
-  white: '#ffffff',
-  champagne: '#f7e7ce',
-  crimson: '#dc143c',
-} as const;
+import { FIREWORK_COLORS, type FireworkColorName } from '../constants';
 
-export type FireworkColorName = keyof typeof FIREWORK_COLORS;
+// Re-export for backwards compatibility
+export { FIREWORK_COLORS, type FireworkColorName };
 
 /**
  * Position offset for particle placement

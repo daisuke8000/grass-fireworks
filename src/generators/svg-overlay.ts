@@ -3,9 +3,7 @@
  * Generates user information overlay (username, commits, level name)
  */
 
-// Default canvas dimensions
-const DEFAULT_WIDTH = 400;
-const DEFAULT_HEIGHT = 200;
+import { CANVAS } from '../constants';
 
 // Text styling
 const TEXT_COLOR = '#ffffff';
@@ -64,8 +62,8 @@ export function generateUserOverlay(config: UserOverlayConfig): string {
     username,
     commits,
     levelName,
-    width = DEFAULT_WIDTH,
-    height = DEFAULT_HEIGHT,
+    width = CANVAS.DEFAULT_WIDTH,
+    height = CANVAS.DEFAULT_HEIGHT,
     isExtra = false,
   } = config;
 

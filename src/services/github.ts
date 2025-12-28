@@ -3,6 +3,8 @@
  * Fetches contribution data for a given user
  */
 
+import { GITHUB_API } from '../constants';
+
 // Result type for type-safe error handling
 export type Result<T, E> =
   | { ok: true; value: T }
@@ -19,8 +21,6 @@ export interface GitHubService {
 export interface GitHubServiceOptions {
   timeoutMs?: number;
 }
-
-const DEFAULT_TIMEOUT_MS = 10000; // 10 seconds
 
 // GraphQL query to fetch contribution calendar
 const CONTRIBUTION_QUERY = `
@@ -64,7 +64,7 @@ interface GitHubGraphQLResponse {
  * Creates a GitHubService instance with the provided token
  */
 export function createGitHubService(token: string, options?: GitHubServiceOptions): GitHubService {
-  const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = options?.timeoutMs ?? GITHUB_API.DEFAULT_TIMEOUT_MS;
 
   return {
     async fetchTodayContributions(username: string): Promise<Result<number, GitHubError>> {
