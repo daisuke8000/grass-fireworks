@@ -76,7 +76,7 @@ describe('Grass Fireworks', () => {
         height: 200,
       });
 
-      expect(svg).toContain('firework-level-5');
+      expect(svg).toMatch(/firework-(kata|matsuri)-level-5/);
       expect(svg).toContain('<animate');
       expect(svg).toContain('repeatCount="indefinite"');
     });

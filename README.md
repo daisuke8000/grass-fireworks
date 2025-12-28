@@ -51,16 +51,13 @@ The fireworks display features two rotating themes inspired by Japanese firework
 | 4 | 諏訪湖 (Suwa Lake) | Water reflection fireworks |
 | 5 | 長岡 (Nagaoka) | Phoenix grand finale |
 
-## Levels
+### Extra: 加茂川 (Kamogawa Niagara)
 
-| Level | Commits | Name | Display |
-|-------|---------|------|---------|
-| 0 | 0 | Silent Night | Stars only |
-| 1 | 1-3 | Getting Started | 1 small firework |
-| 2 | 4-7 | Good Progress | 2 fireworks |
-| 3 | 8-15 | Productive Day | 3 colorful fireworks |
-| 4 | 16-29 | On Fire | 5 continuous fireworks |
-| 5 | 30+ | Legendary | 9 fireworks with special effects |
+A bonus "Niagara" waterfall effect inspired by the Echigo Kamogawa Summer Festival. Triggered when:
+- Commits > 50, or
+- Commits ≥ 30 on lucky days (every 10th day of year)
+
+![Niagara Demo](https://grass-fireworks.dsk8.workers.dev/api/demo?level=5&theme=kata&extra=true)
 
 ## Private Repositories
 
@@ -95,18 +92,7 @@ Demo endpoint for testing (no GitHub API required).
 | `width` | No | 400 | SVG width (200-800) |
 | `height` | No | 200 | SVG height (100-400) |
 | `theme` | No | auto | Theme: `kata`, `matsuri`, or omit for daily rotation |
-
-## Demo Links
-
-### Theme: Kata (型)
-- [Level 1 - 和火 (Wabi)](https://grass-fireworks.dsk8.workers.dev/api/demo?level=1&theme=kata)
-- [Level 3 - 蜂 (Hachi)](https://grass-fireworks.dsk8.workers.dev/api/demo?level=3&theme=kata)
-- [Level 5 - 錦冠千輪](https://grass-fireworks.dsk8.workers.dev/api/demo?level=5&theme=kata)
-
-### Theme: Matsuri (祭)
-- [Level 2 - 隅田川 (Sumida)](https://grass-fireworks.dsk8.workers.dev/api/demo?level=2&theme=matsuri)
-- [Level 4 - 諏訪湖 (Suwa Lake)](https://grass-fireworks.dsk8.workers.dev/api/demo?level=4&theme=matsuri)
-- [Level 5 - 長岡 (Nagaoka)](https://grass-fireworks.dsk8.workers.dev/api/demo?level=5&theme=matsuri)
+| `extra` | No | false | Enable Niagara effect (`true` or `1`) |
 
 ## Local Development
 

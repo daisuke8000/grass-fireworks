@@ -12,13 +12,6 @@ import type { ThemeName } from '../services/theme-selector';
 import { generateNightSky } from './svg-background';
 import { generateUserOverlay } from './svg-overlay';
 import {
-  generateFireworkLevel1,
-  generateFireworkLevel2,
-  generateFireworkLevel3,
-  generateFireworkLevel4,
-  generateFireworkLevel5,
-} from './svg-firework-levels';
-import {
   generateKataLevel1,
   generateKataLevel2,
   generateKataLevel3,
@@ -107,51 +100,24 @@ function generateMatsuriFirework(level: FireworksLevel, config: LevelConfig): st
 }
 
 /**
- * Generates the firework animation for default theme (original)
- * Level 0 returns empty string (stars only)
- */
-function generateDefaultFirework(level: FireworksLevel, config: LevelConfig): string {
-  switch (level) {
-    case 0:
-      return ''; // Level 0: Silent night, no fireworks
-    case 1:
-      return generateFireworkLevel1(config);
-    case 2:
-      return generateFireworkLevel2(config);
-    case 3:
-      return generateFireworkLevel3(config);
-    case 4:
-      return generateFireworkLevel4(config);
-    case 5:
-      return generateFireworkLevel5(config);
-    default:
-      return '';
-  }
-}
-
-/**
  * Generates the firework animation for a specific level and theme
  */
 function generateFireworkForLevel(
   level: FireworksLevel,
   width: number,
   height: number,
-  theme?: ThemeName
+  theme: ThemeName
 ): string {
   const config: LevelConfig = {
     canvasWidth: width,
     canvasHeight: height,
   };
 
-  if (theme === 'kata') {
-    return generateKataFirework(level, config);
-  }
   if (theme === 'matsuri') {
     return generateMatsuriFirework(level, config);
   }
-
-  // Default: use original fireworks (backward compatibility)
-  return generateDefaultFirework(level, config);
+  // Default to kata
+  return generateKataFirework(level, config);
 }
 
 /**
@@ -176,7 +142,7 @@ export function generateFireworksSVG(config: FireworksSVGConfig): string {
 
   // Generate each layer
   const nightSky = generateNightSky({ level, username, width, height });
-  const fireworks = generateFireworkForLevel(level, width, height, theme);
+  const fireworks = generateFireworkForLevel(level, width, height, theme ?? 'kata');
   const overlay = generateUserOverlay({ username, commits, levelName, width, height, isExtra });
 
   // Background fireworks for levels 1-5 (more for higher levels)
