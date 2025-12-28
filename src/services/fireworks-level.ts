@@ -8,6 +8,7 @@
  */
 
 import type { ThemeName } from './theme-selector';
+import { isLuckyDay } from '../utils/date';
 
 export type FireworksLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -47,12 +48,6 @@ export const LEVEL_NAMES_MATSURI: Record<FireworksLevel, string> = {
   5: '長岡',
 };
 
-function getDayOfYear(date: Date): number {
-  const start = new Date(date.getFullYear(), 0, 0);
-  const diff = date.getTime() - start.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
-}
-
 /**
  * Determines if extra Niagara effect should be triggered
  * - commits > 50: Always triggered
@@ -61,8 +56,7 @@ function getDayOfYear(date: Date): number {
 export function isExtraTriggered(commits: number, date: Date = new Date()): boolean {
   if (commits > 50) return true;
   if (commits >= 30) {
-    const dayOfYear = getDayOfYear(date);
-    return dayOfYear % 10 === 0;
+    return isLuckyDay(date);
   }
   return false;
 }

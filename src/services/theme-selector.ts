@@ -3,14 +3,9 @@
  * Daily theme selection between "kata" (型) and "matsuri" (祭)
  */
 
-export type ThemeName = 'kata' | 'matsuri';
+import { getDayOfYear } from '../utils/date';
 
-function getDayOfYear(date: Date): number {
-  const start = new Date(date.getFullYear(), 0, 0);
-  const diff = date.getTime() - start.getTime();
-  const oneDay = 1000 * 60 * 60 * 24;
-  return Math.floor(diff / oneDay);
-}
+export type ThemeName = 'kata' | 'matsuri';
 
 /**
  * Selects theme based on date (daily switching)
