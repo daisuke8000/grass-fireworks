@@ -10,12 +10,12 @@
  */
 
 import {
-  FIREWORK_COLORS,
   generateGlowFilter,
   generateSpark,
   generateGravityParticles,
   generateRotatingParticles,
-  getCirclePositions,
+  generateThemeTrail,
+  generateThemeParticles,
   type FireworkColorName,
 } from '../svg-firework-parts';
 
@@ -24,120 +24,7 @@ export interface KataLevelConfig {
   canvasHeight: number;
 }
 
-// Animation timing constants
 const TRAIL_DURATION = 0.6;
-
-/**
- * Generates a smooth trail with easing
- */
-function generateTrail(config: {
-  x: number;
-  startY: number;
-  endY: number;
-  color: FireworkColorName;
-  duration: number;
-  delay: number;
-  loopInterval: number;
-  id?: string;
-}): string {
-  const { x, startY, endY, color, duration, delay, loopInterval, id } = config;
-  const colorValue = FIREWORK_COLORS[color];
-  const trailId = id ? ` id="${id}"` : '';
-
-  const trailEnd = (delay + duration) / loopInterval;
-  const fadeEnd = Math.min((delay + duration + 0.3) / loopInterval, 0.99);
-
-  return `<line${trailId} x1="${x}" y1="${startY}" x2="${x}" y2="${startY}"
-      stroke="${colorValue}" stroke-width="3" stroke-linecap="round" opacity="0">
-    <animate attributeName="y2"
-             values="${startY};${startY};${endY};${endY}"
-             keyTimes="0;${(delay / loopInterval).toFixed(4)};${trailEnd.toFixed(4)};1"
-             calcMode="spline"
-             keySplines="0 0 1 1;0.1 0.8 0.2 1;0 0 1 1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-    <animate attributeName="y1"
-             values="${startY};${startY};${startY};${endY};${endY}"
-             keyTimes="0;${(delay / loopInterval).toFixed(4)};${((delay + duration * 0.5) / loopInterval).toFixed(4)};${fadeEnd.toFixed(4)};1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-    <animate attributeName="opacity"
-             values="0;0;1;0.8;0;0"
-             keyTimes="0;${(delay / loopInterval).toFixed(4)};${((delay + 0.05) / loopInterval).toFixed(4)};${trailEnd.toFixed(4)};${fadeEnd.toFixed(4)};1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-  </line>`;
-}
-
-/**
- * Generates smooth particles with size animation
- */
-function generateParticles(config: {
-  cx: number;
-  cy: number;
-  particleCount: number;
-  distance: number;
-  color: FireworkColorName;
-  duration: number;
-  delay: number;
-  loopInterval: number;
-  applyGlow?: boolean;
-  id?: string;
-  initialRadius?: number;
-}): string {
-  const {
-    cx,
-    cy,
-    particleCount,
-    distance,
-    color,
-    duration,
-    delay,
-    loopInterval,
-    applyGlow = true,
-    id,
-    initialRadius = 4,
-  } = config;
-  const colorValue = FIREWORK_COLORS[color];
-  const filterAttr = applyGlow ? ' filter="url(#fireworkGlow)"' : '';
-  const groupId = id ? ` id="${id}"` : '';
-
-  const explosionStart = delay / loopInterval;
-  const explosionEnd = (delay + duration) / loopInterval;
-
-  const particles: string[] = [];
-
-  for (let i = 0; i < particleCount; i++) {
-    const angle = (2 * Math.PI * i) / particleCount;
-    const dx = Math.round(Math.cos(angle) * distance);
-    const dy = Math.round(Math.sin(angle) * distance);
-
-    particles.push(`    <circle cx="${cx}" cy="${cy}" r="${initialRadius}" fill="${colorValue}"${filterAttr} opacity="0">
-      <animateTransform attributeName="transform"
-                        type="translate"
-                        values="0 0;0 0;${dx} ${dy};${dx} ${dy}"
-                        keyTimes="0;${explosionStart.toFixed(4)};${explosionEnd.toFixed(4)};1"
-                        calcMode="spline"
-                        keySplines="0 0 1 1;0.1 0.8 0.3 1;0 0 1 1"
-                        dur="${loopInterval}s" begin="0s"
-                        repeatCount="indefinite" />
-      <animate attributeName="opacity"
-               values="0;0;1;0.7;0;0"
-               keyTimes="0;${explosionStart.toFixed(4)};${((delay + 0.05) / loopInterval).toFixed(4)};${((delay + duration * 0.7) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)};1"
-               dur="${loopInterval}s" begin="0s"
-               repeatCount="indefinite" />
-      <animate attributeName="r"
-               values="${initialRadius};${initialRadius};${initialRadius};${initialRadius * 0.3};${initialRadius * 0.3}"
-               keyTimes="0;${explosionStart.toFixed(4)};${((delay + 0.1) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)};1"
-               dur="${loopInterval}s" begin="0s"
-               repeatCount="indefinite" />
-    </circle>`);
-  }
-
-  return `<g${groupId} class="firework-particles">
-${particles.join('\n')}
-  </g>`;
-}
 
 /**
  * Level 1: 和火 (Wabi)
@@ -154,7 +41,7 @@ export function generateKataLevel1(config: KataLevelConfig): string {
 
   const glowFilter = generateGlowFilter();
 
-  const trail = generateTrail({
+  const trail = generateThemeTrail({
     x,
     startY,
     endY: explosionY,
@@ -167,7 +54,7 @@ export function generateKataLevel1(config: KataLevelConfig): string {
 
   const spark = generateSpark(x, explosionY, 'wabi', explosionDelay, loopInterval);
 
-  const particles = generateParticles({
+  const particles = generateThemeParticles({
     cx: x,
     cy: explosionY,
     particleCount: 10,
@@ -215,7 +102,7 @@ export function generateKataLevel2(config: KataLevelConfig): string {
     const x = Math.round(canvasWidth * fw.pos);
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
-    elements.push(generateTrail({
+    elements.push(generateThemeTrail({
       x,
       startY,
       endY: explosionY,
@@ -228,7 +115,7 @@ export function generateKataLevel2(config: KataLevelConfig): string {
 
     elements.push(generateSpark(x, explosionY, fw.color, explosionDelay, loopInterval));
 
-    elements.push(generateParticles({
+    elements.push(generateThemeParticles({
       cx: x,
       cy: explosionY,
       particleCount: fw.count,
@@ -276,7 +163,7 @@ export function generateKataLevel3(config: KataLevelConfig): string {
     const x = Math.round(canvasWidth * fw.pos);
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
-    elements.push(generateTrail({
+    elements.push(generateThemeTrail({
       x,
       startY,
       endY: explosionY,
@@ -340,7 +227,7 @@ export function generateKataLevel4(config: KataLevelConfig): string {
     const explosionY = baseExplosionY + fw.yOffset;
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
-    elements.push(generateTrail({
+    elements.push(generateThemeTrail({
       x,
       startY,
       endY: explosionY,
@@ -392,7 +279,7 @@ export function generateKataLevel5(config: KataLevelConfig): string {
   const glowFilter = generateGlowFilter();
 
   // Main gold trail
-  const mainTrail = generateTrail({
+  const mainTrail = generateThemeTrail({
     x: centerX,
     startY,
     endY: mainExplosionY,
@@ -421,7 +308,7 @@ export function generateKataLevel5(config: KataLevelConfig): string {
   });
 
   // Secondary silver particles (inner layer)
-  const silverParticles = generateParticles({
+  const silverParticles = generateThemeParticles({
     cx: centerX,
     cy: mainExplosionY,
     particleCount: 16,
@@ -455,7 +342,7 @@ export function generateKataLevel5(config: KataLevelConfig): string {
     const explosionY = mainExplosionY + yOffset;
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
-    surroundingElements.push(generateTrail({
+    surroundingElements.push(generateThemeTrail({
       x,
       startY,
       endY: explosionY,
@@ -466,7 +353,7 @@ export function generateKataLevel5(config: KataLevelConfig): string {
       id: `kata5-surround-trail-${i}`,
     }));
 
-    surroundingElements.push(generateParticles({
+    surroundingElements.push(generateThemeParticles({
       cx: x,
       cy: explosionY,
       particleCount: 10,

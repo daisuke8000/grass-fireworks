@@ -17,6 +17,8 @@ import {
   generateReflectionPoints,
   generateWaterSurface,
   generateWaterGradient,
+  generateThemeTrail,
+  generateThemeParticles,
   getHeartPositions,
   getStarPositions,
   type FireworkColorName,
@@ -27,120 +29,7 @@ export interface MatsuriLevelConfig {
   canvasHeight: number;
 }
 
-// Animation timing constants
 const TRAIL_DURATION = 0.6;
-
-/**
- * Generates a smooth trail with easing
- */
-function generateTrail(config: {
-  x: number;
-  startY: number;
-  endY: number;
-  color: FireworkColorName;
-  duration: number;
-  delay: number;
-  loopInterval: number;
-  id?: string;
-}): string {
-  const { x, startY, endY, color, duration, delay, loopInterval, id } = config;
-  const colorValue = FIREWORK_COLORS[color];
-  const trailId = id ? ` id="${id}"` : '';
-
-  const trailEnd = (delay + duration) / loopInterval;
-  const fadeEnd = Math.min((delay + duration + 0.3) / loopInterval, 0.99);
-
-  return `<line${trailId} x1="${x}" y1="${startY}" x2="${x}" y2="${startY}"
-      stroke="${colorValue}" stroke-width="3" stroke-linecap="round" opacity="0">
-    <animate attributeName="y2"
-             values="${startY};${startY};${endY};${endY}"
-             keyTimes="0;${(delay / loopInterval).toFixed(4)};${trailEnd.toFixed(4)};1"
-             calcMode="spline"
-             keySplines="0 0 1 1;0.1 0.8 0.2 1;0 0 1 1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-    <animate attributeName="y1"
-             values="${startY};${startY};${startY};${endY};${endY}"
-             keyTimes="0;${(delay / loopInterval).toFixed(4)};${((delay + duration * 0.5) / loopInterval).toFixed(4)};${fadeEnd.toFixed(4)};1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-    <animate attributeName="opacity"
-             values="0;0;1;0.8;0;0"
-             keyTimes="0;${(delay / loopInterval).toFixed(4)};${((delay + 0.05) / loopInterval).toFixed(4)};${trailEnd.toFixed(4)};${fadeEnd.toFixed(4)};1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-  </line>`;
-}
-
-/**
- * Generates smooth particles with size animation
- */
-function generateParticles(config: {
-  cx: number;
-  cy: number;
-  particleCount: number;
-  distance: number;
-  color: FireworkColorName;
-  duration: number;
-  delay: number;
-  loopInterval: number;
-  applyGlow?: boolean;
-  id?: string;
-  initialRadius?: number;
-}): string {
-  const {
-    cx,
-    cy,
-    particleCount,
-    distance,
-    color,
-    duration,
-    delay,
-    loopInterval,
-    applyGlow = true,
-    id,
-    initialRadius = 4,
-  } = config;
-  const colorValue = FIREWORK_COLORS[color];
-  const filterAttr = applyGlow ? ' filter="url(#fireworkGlow)"' : '';
-  const groupId = id ? ` id="${id}"` : '';
-
-  const explosionStart = delay / loopInterval;
-  const explosionEnd = (delay + duration) / loopInterval;
-
-  const particles: string[] = [];
-
-  for (let i = 0; i < particleCount; i++) {
-    const angle = (2 * Math.PI * i) / particleCount;
-    const dx = Math.round(Math.cos(angle) * distance);
-    const dy = Math.round(Math.sin(angle) * distance);
-
-    particles.push(`    <circle cx="${cx}" cy="${cy}" r="${initialRadius}" fill="${colorValue}"${filterAttr} opacity="0">
-      <animateTransform attributeName="transform"
-                        type="translate"
-                        values="0 0;0 0;${dx} ${dy};${dx} ${dy}"
-                        keyTimes="0;${explosionStart.toFixed(4)};${explosionEnd.toFixed(4)};1"
-                        calcMode="spline"
-                        keySplines="0 0 1 1;0.1 0.8 0.3 1;0 0 1 1"
-                        dur="${loopInterval}s" begin="0s"
-                        repeatCount="indefinite" />
-      <animate attributeName="opacity"
-               values="0;0;1;0.7;0;0"
-               keyTimes="0;${explosionStart.toFixed(4)};${((delay + 0.05) / loopInterval).toFixed(4)};${((delay + duration * 0.7) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)};1"
-               dur="${loopInterval}s" begin="0s"
-               repeatCount="indefinite" />
-      <animate attributeName="r"
-               values="${initialRadius};${initialRadius};${initialRadius};${initialRadius * 0.3};${initialRadius * 0.3}"
-               keyTimes="0;${explosionStart.toFixed(4)};${((delay + 0.1) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)};1"
-               dur="${loopInterval}s" begin="0s"
-               repeatCount="indefinite" />
-    </circle>`);
-  }
-
-  return `<g${groupId} class="firework-particles">
-${particles.join('\n')}
-  </g>`;
-}
 
 /**
  * Level 1: 線香花火 (Senko Hanabi - Sparkler)
@@ -157,7 +46,7 @@ export function generateMatsuriLevel1(config: MatsuriLevelConfig): string {
 
   const glowFilter = generateGlowFilter();
 
-  const trail = generateTrail({
+  const trail = generateThemeTrail({
     x,
     startY,
     endY: explosionY,
@@ -256,7 +145,7 @@ export function generateMatsuriLevel2(config: MatsuriLevelConfig): string {
   const heartDelay = 0;
   const heartExplosionDelay = heartDelay + TRAIL_DURATION;
 
-  const heartTrail = generateTrail({
+  const heartTrail = generateThemeTrail({
     x: heartX,
     startY,
     endY: explosionY,
@@ -288,7 +177,7 @@ export function generateMatsuriLevel2(config: MatsuriLevelConfig): string {
   const starDelay = 0.6;
   const starExplosionDelay = starDelay + TRAIL_DURATION;
 
-  const starTrail = generateTrail({
+  const starTrail = generateThemeTrail({
     x: starX,
     startY,
     endY: explosionY + 5,
@@ -358,7 +247,7 @@ export function generateMatsuriLevel3(config: MatsuriLevelConfig): string {
     const explosionY = baseExplosionY + yOffset;
     const explosionDelay = fw.delay + TRAIL_DURATION * 0.8;
 
-    elements.push(generateTrail({
+    elements.push(generateThemeTrail({
       x,
       startY,
       endY: explosionY,
@@ -371,7 +260,7 @@ export function generateMatsuriLevel3(config: MatsuriLevelConfig): string {
 
     elements.push(generateSpark(x, explosionY, fw.color, explosionDelay, loopInterval));
 
-    elements.push(generateParticles({
+    elements.push(generateThemeParticles({
       cx: x,
       cy: explosionY,
       particleCount: fw.count,
@@ -423,7 +312,7 @@ export function generateMatsuriLevel4(config: MatsuriLevelConfig): string {
     const explosionY = baseExplosionY + (i * 8);
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
-    elements.push(generateTrail({
+    elements.push(generateThemeTrail({
       x,
       startY,
       endY: explosionY,
@@ -436,7 +325,7 @@ export function generateMatsuriLevel4(config: MatsuriLevelConfig): string {
 
     elements.push(generateSpark(x, explosionY, fw.color, explosionDelay, loopInterval));
 
-    elements.push(generateParticles({
+    elements.push(generateThemeParticles({
       cx: x,
       cy: explosionY,
       particleCount: fw.count,
@@ -491,7 +380,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
   const glowFilter = generateGlowFilter();
 
   // Main Phoenix firework (center)
-  const mainTrail = generateTrail({
+  const mainTrail = generateThemeTrail({
     x: centerX,
     startY,
     endY: mainExplosionY,
@@ -525,7 +414,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
   });
 
   // Main particles (orange phoenix core)
-  const mainParticles = generateParticles({
+  const mainParticles = generateThemeParticles({
     cx: centerX,
     cy: mainExplosionY,
     particleCount: 24,
@@ -540,7 +429,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
   });
 
   // Secondary red particles
-  const secondaryParticles = generateParticles({
+  const secondaryParticles = generateThemeParticles({
     cx: centerX,
     cy: mainExplosionY,
     particleCount: 16,
@@ -576,7 +465,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
     const explosionY = mainExplosionY + yOffset;
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
-    surroundingElements.push(generateTrail({
+    surroundingElements.push(generateThemeTrail({
       x,
       startY,
       endY: explosionY,
@@ -587,7 +476,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
       id: `matsuri5-surround-trail-${i}`,
     }));
 
-    surroundingElements.push(generateParticles({
+    surroundingElements.push(generateThemeParticles({
       cx: x,
       cy: explosionY,
       particleCount: fw.count,
