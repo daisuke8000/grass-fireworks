@@ -24,6 +24,8 @@ export interface UserOverlayConfig {
   levelName: string;
   width?: number;
   height?: number;
+  /** Extra effect active (Niagara/加茂川) */
+  isExtra?: boolean;
 }
 
 /**
@@ -64,6 +66,7 @@ export function generateUserOverlay(config: UserOverlayConfig): string {
     levelName,
     width = DEFAULT_WIDTH,
     height = DEFAULT_HEIGHT,
+    isExtra = false,
   } = config;
 
   const safeUsername = escapeXml(username);
@@ -72,6 +75,18 @@ export function generateUserOverlay(config: UserOverlayConfig): string {
   const bottomY = height - PADDING;
 
   const shadowFilter = generateShadowFilter();
+
+  // Extra effect label (加茂川 = Kamogawa Niagara)
+  const extraLabel = isExtra
+    ? `<text x="${width - PADDING}" y="${TOP_Y + LEVEL_FONT_SIZE + 4}"
+          font-family="${FONT_FAMILY}"
+          font-size="${LEVEL_FONT_SIZE}"
+          fill="#ffd700"
+          text-anchor="end"
+          filter="url(#textShadow)">
+      + 加茂川
+    </text>`
+    : '';
 
   return `<g id="user-overlay">
     <defs>
@@ -102,5 +117,6 @@ export function generateUserOverlay(config: UserOverlayConfig): string {
           filter="url(#textShadow)">
       ${safeLevelName}
     </text>
+    ${extraLabel}
   </g>`;
 }

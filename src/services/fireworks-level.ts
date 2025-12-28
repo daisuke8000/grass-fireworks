@@ -47,6 +47,26 @@ export const LEVEL_NAMES_MATSURI: Record<FireworksLevel, string> = {
   5: '長岡',
 };
 
+function getDayOfYear(date: Date): number {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff = date.getTime() - start.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Determines if extra Niagara effect should be triggered
+ * - commits > 50: Always triggered
+ * - commits >= 30: Triggered on "lucky days" (every 10th day of year)
+ */
+export function isExtraTriggered(commits: number, date: Date = new Date()): boolean {
+  if (commits > 50) return true;
+  if (commits >= 30) {
+    const dayOfYear = getDayOfYear(date);
+    return dayOfYear % 10 === 0;
+  }
+  return false;
+}
+
 /**
  * Calculates the fireworks level based on contribution count
  *

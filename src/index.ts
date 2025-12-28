@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { createGitHubService } from './services/github';
-import { calculateLevel, getLevelName, type FireworksLevel } from './services/fireworks-level';
+import { calculateLevel, getLevelName, isExtraTriggered, type FireworksLevel } from './services/fireworks-level';
 import { generateFireworksSVG } from './generators/svg-generator';
 import { selectThemeByDate, isValidTheme, type ThemeName } from './services/theme-selector';
 
@@ -58,6 +58,7 @@ export const demoQuerySchema = z.object({
   width: z.coerce.number().int().min(MIN_WIDTH).max(MAX_WIDTH).optional().default(DEFAULT_WIDTH),
   height: z.coerce.number().int().min(MIN_HEIGHT).max(MAX_HEIGHT).optional().default(DEFAULT_HEIGHT),
   theme: z.string().optional(),
+  extra: z.enum(['true', 'false', '1', '0']).optional(),
 });
 
 // Cache TTL constants
@@ -129,6 +130,7 @@ app.get(
     const commits = result.value;
     const level = calculateLevel(commits);
     const levelName = getLevelName(level, theme);
+    const isExtra = isExtraTriggered(commits);
 
     const svg = generateFireworksSVG({
       username: user,
@@ -138,6 +140,7 @@ app.get(
       width,
       height,
       theme,
+      isExtra,
     });
 
     const response = new Response(svg, {
@@ -172,13 +175,16 @@ app.get(
       return cached;
     }
 
-    const { commits, level: levelParam, user, width, height, theme: themeParam } = c.req.valid('query');
+    const { commits, level: levelParam, user, width, height, theme: themeParam, extra } = c.req.valid('query');
     const displayName = user || 'demo';
     const theme = resolveTheme(themeParam);
 
     // Use explicit level if provided, otherwise calculate from commits
     const level = (levelParam !== undefined ? levelParam : calculateLevel(commits)) as FireworksLevel;
     const levelName = getLevelName(level, theme);
+
+    // Extra: explicit 'extra' param or automatic trigger from commits
+    const isExtra = extra === 'true' || extra === '1' || isExtraTriggered(commits);
 
     const svg = generateFireworksSVG({
       username: displayName,
@@ -188,6 +194,7 @@ app.get(
       width,
       height,
       theme,
+      isExtra,
     });
 
     const response = new Response(svg, {

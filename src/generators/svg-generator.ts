@@ -32,7 +32,7 @@ import {
   generateMatsuriLevel4,
   generateMatsuriLevel5,
 } from './themes/matsuri-levels';
-import { generateBackgroundFireworks } from './svg-firework-parts';
+import { generateBackgroundFireworks, generateNiagaraEffect } from './svg-firework-parts';
 
 // Default canvas dimensions
 const DEFAULT_WIDTH = 400;
@@ -53,6 +53,8 @@ export interface FireworksSVGConfig {
   height?: number;
   /** Theme name (kata or matsuri, optional) */
   theme?: ThemeName;
+  /** Extra effect: Niagara firework (triggered by high commits or lucky day) */
+  isExtra?: boolean;
 }
 
 interface LevelConfig {
@@ -169,12 +171,13 @@ export function generateFireworksSVG(config: FireworksSVGConfig): string {
     width = DEFAULT_WIDTH,
     height = DEFAULT_HEIGHT,
     theme,
+    isExtra = false,
   } = config;
 
   // Generate each layer
   const nightSky = generateNightSky({ level, username, width, height });
   const fireworks = generateFireworkForLevel(level, width, height, theme);
-  const overlay = generateUserOverlay({ username, commits, levelName, width, height });
+  const overlay = generateUserOverlay({ username, commits, levelName, width, height, isExtra });
 
   // Background fireworks for levels 1-5 (more for higher levels)
   const bgFireworksCount = level > 0 ? Math.min(level + 1, 4) : 0;
@@ -188,11 +191,23 @@ export function generateFireworksSVG(config: FireworksSVGConfig): string {
       })
     : '';
 
+  // Extra: Niagara effect (waterfall of sparks from top)
+  const niagara = isExtra
+    ? generateNiagaraEffect({
+        canvasWidth: width,
+        canvasHeight: height,
+        loopDuration: 4.0,
+      })
+    : '';
+
   // Combine all layers into complete SVG
+  // Layer order: nightSky → bgFireworks → fireworks → niagara (top) → overlay
+  // Niagara is placed on top for maximum "light curtain" impact
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   ${nightSky}
   ${bgFireworks}
   ${fireworks}
+  ${niagara}
   ${overlay}
 </svg>`;
 }
