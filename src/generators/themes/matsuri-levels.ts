@@ -10,8 +10,6 @@
  */
 
 import {
-  FIREWORK_COLORS,
-  generateGlowFilter,
   generateSpark,
   generateShapedParticles,
   generateReflectionPoints,
@@ -44,8 +42,6 @@ export function generateMatsuriLevel1(config: MatsuriLevelConfig): string {
   const explosionY = Math.round(canvasHeight * 0.40);
   const explosionDelay = TRAIL_DURATION;
 
-  const glowFilter = generateGlowFilter();
-
   const trail = generateThemeTrail({
     x,
     startY,
@@ -61,23 +57,20 @@ export function generateMatsuriLevel1(config: MatsuriLevelConfig): string {
   const sparklerParticles = generateSparklerEffect({
     cx: x,
     cy: explosionY,
-    particleCount: 12,
+    particleCount: 10,
     maxDistance: 25,
     delay: explosionDelay,
     loopInterval,
   });
 
   return `<g id="firework-matsuri-level-1">
-  <defs>
-    ${glowFilter}
-  </defs>
   ${trail}
   ${sparklerParticles}
 </g>`;
 }
 
 /**
- * Generates sparkler-like twinkling particles
+ * Generates sparkler-like twinkling particles using CSS animation
  */
 function generateSparklerEffect(config: {
   cx: number;
@@ -88,44 +81,24 @@ function generateSparklerEffect(config: {
   loopInterval: number;
 }): string {
   const { cx, cy, particleCount, maxDistance, delay, loopInterval } = config;
-  const colorValue = FIREWORK_COLORS['orange'];
+  const t0 = delay / loopInterval;
+  const t1 = (delay + 2.0) / loopInterval;
 
   const particles: string[] = [];
-  const explosionStart = delay / loopInterval;
-  const explosionEnd = (delay + 2.0) / loopInterval;
-
   for (let i = 0; i < particleCount; i++) {
     const angle = (2 * Math.PI * i) / particleCount;
-    // Deterministic variation based on particle index (0.6-1.0 range)
     const distanceVariation = 0.6 + 0.4 * ((i * 7 + 3) % 10) / 10;
     const distance = maxDistance * distanceVariation;
     const dx = Math.round(Math.cos(angle) * distance);
     const dy = Math.round(Math.sin(angle) * distance);
-    const twinkleOffset = (i * 0.15) / loopInterval;
 
-    particles.push(`    <circle cx="${cx}" cy="${cy}" r="2" fill="${colorValue}" filter="url(#fireworkGlow)" opacity="0">
-      <animateTransform attributeName="transform"
-                        type="translate"
-                        values="0 0;0 0;${dx} ${dy};${dx} ${dy + 15}"
-                        keyTimes="0;${explosionStart.toFixed(4)};${((delay + 1.0) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)}"
-                        dur="${loopInterval}s" begin="0s"
-                        repeatCount="indefinite" />
-      <animate attributeName="opacity"
-               values="0;0;1;0.8;0.4;0"
-               keyTimes="0;${(explosionStart + twinkleOffset).toFixed(4)};${((delay + 0.2) / loopInterval + twinkleOffset).toFixed(4)};${((delay + 0.8) / loopInterval).toFixed(4)};${((delay + 1.5) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)}"
-               dur="${loopInterval}s" begin="0s"
-               repeatCount="indefinite" />
-      <animate attributeName="r"
-               values="2;2;3;2;1"
-               keyTimes="0;${explosionStart.toFixed(4)};${((delay + 0.3) / loopInterval).toFixed(4)};${((delay + 1.0) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)}"
-               dur="${loopInterval}s" begin="0s"
-               repeatCount="indefinite" />
-    </circle>`);
+    particles.push(
+      `    <circle cx="${cx}" cy="${cy}" r="5" fill="url(#glow-orange)"
+      class="particle" style="--dx:${dx}px;--dy:${dy}px;--t0:${t0.toFixed(4)};--t1:${t1.toFixed(4)};--dur:${loopInterval}s"/>`
+    );
   }
 
-  return `<g id="matsuri1-sparkler" class="sparkler-particles">
-${particles.join('\n')}
-  </g>`;
+  return `<g id="matsuri1-sparkler" class="sparkler-particles">\n${particles.join('\n')}\n  </g>`;
 }
 
 /**
@@ -138,8 +111,6 @@ export function generateMatsuriLevel2(config: MatsuriLevelConfig): string {
 
   const startY = canvasHeight;
   const explosionY = Math.round(canvasHeight * 0.35);
-
-  const glowFilter = generateGlowFilter();
 
   // Heart-shaped firework (left)
   const heartX = Math.round(canvasWidth * 0.35);
@@ -168,7 +139,7 @@ export function generateMatsuriLevel2(config: MatsuriLevelConfig): string {
     duration: 1.0,
     delay: heartExplosionDelay,
     loopDuration: loopInterval,
-    applyGlow: true,
+    applyGlow: false,
     id: 'matsuri2-heart-particles',
     initialRadius: 3,
   });
@@ -200,15 +171,12 @@ export function generateMatsuriLevel2(config: MatsuriLevelConfig): string {
     duration: 1.0,
     delay: starExplosionDelay,
     loopDuration: loopInterval,
-    applyGlow: true,
+    applyGlow: false,
     id: 'matsuri2-star-particles',
     initialRadius: 3,
   });
 
   return `<g id="firework-matsuri-level-2">
-  <defs>
-    ${glowFilter}
-  </defs>
   ${heartTrail}
   ${heartSpark}
   ${heartParticles}
@@ -227,11 +195,11 @@ export function generateMatsuriLevel3(config: MatsuriLevelConfig): string {
   const loopInterval = 3.5;
 
   const fireworks = [
-    { pos: 0.5, delay: 0, color: 'purple' as FireworkColorName, count: 18 },
-    { pos: 0.2, delay: 0.15, color: 'pink' as FireworkColorName, count: 14 },
-    { pos: 0.8, delay: 0.25, color: 'cyan' as FireworkColorName, count: 14 },
-    { pos: 0.35, delay: 0.4, color: 'orange' as FireworkColorName, count: 16 },
-    { pos: 0.65, delay: 0.5, color: 'green' as FireworkColorName, count: 16 },
+    { pos: 0.5, delay: 0, color: 'purple' as FireworkColorName, count: 14 },
+    { pos: 0.2, delay: 0.15, color: 'pink' as FireworkColorName, count: 10 },
+    { pos: 0.8, delay: 0.25, color: 'cyan' as FireworkColorName, count: 10 },
+    { pos: 0.35, delay: 0.4, color: 'orange' as FireworkColorName, count: 12 },
+    { pos: 0.65, delay: 0.5, color: 'green' as FireworkColorName, count: 12 },
     { pos: 0.15, delay: 0.65, color: 'blue' as FireworkColorName, count: 12 },
     { pos: 0.85, delay: 0.75, color: 'yellow' as FireworkColorName, count: 12 },
   ];
@@ -239,7 +207,6 @@ export function generateMatsuriLevel3(config: MatsuriLevelConfig): string {
   const startY = canvasHeight;
   const baseExplosionY = Math.round(canvasHeight * 0.32);
 
-  const glowFilter = generateGlowFilter();
   const elements: string[] = [];
 
   for (let i = 0; i < fireworks.length; i++) {
@@ -271,16 +238,13 @@ export function generateMatsuriLevel3(config: MatsuriLevelConfig): string {
       duration: 0.6,
       delay: explosionDelay,
       loopInterval,
-      applyGlow: true,
+      applyGlow: false,
       id: `matsuri3-particles-${i}`,
       initialRadius: i === 0 ? 4 : 3,
     }));
   }
 
   return `<g id="firework-matsuri-level-3">
-  <defs>
-    ${glowFilter}
-  </defs>
   ${elements.join('\n  ')}
 </g>`;
 }
@@ -295,15 +259,14 @@ export function generateMatsuriLevel4(config: MatsuriLevelConfig): string {
   const waterY = Math.round(canvasHeight * 0.75);
 
   const fireworks = [
-    { pos: 0.5, delay: 0, color: 'blue' as FireworkColorName, count: 20, distance: 70 },
-    { pos: 0.25, delay: 0.4, color: 'purple' as FireworkColorName, count: 16, distance: 55 },
-    { pos: 0.75, delay: 0.7, color: 'cyan' as FireworkColorName, count: 16, distance: 55 },
+    { pos: 0.5, delay: 0, color: 'blue' as FireworkColorName, count: 14, distance: 70 },
+    { pos: 0.25, delay: 0.4, color: 'purple' as FireworkColorName, count: 12, distance: 55 },
+    { pos: 0.75, delay: 0.7, color: 'cyan' as FireworkColorName, count: 12, distance: 55 },
   ];
 
   const startY = waterY - 10;
   const baseExplosionY = Math.round(canvasHeight * 0.35);
 
-  const glowFilter = generateGlowFilter();
   const waterGradient = generateWaterGradient();
   const waterSurface = generateWaterSurface(canvasWidth, waterY);
   const elements: string[] = [];
@@ -336,7 +299,7 @@ export function generateMatsuriLevel4(config: MatsuriLevelConfig): string {
       duration: 1.0,
       delay: explosionDelay,
       loopInterval,
-      applyGlow: true,
+      applyGlow: false,
       id: `matsuri4-particles-${i}`,
       initialRadius: 4,
     }));
@@ -358,7 +321,6 @@ export function generateMatsuriLevel4(config: MatsuriLevelConfig): string {
 
   return `<g id="firework-matsuri-level-4">
   <defs>
-    ${glowFilter}
     ${waterGradient}
   </defs>
   ${waterSurface}
@@ -379,8 +341,6 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
   const mainExplosionY = Math.round(canvasHeight * 0.28);
   const mainExplosionDelay = TRAIL_DURATION;
 
-  const glowFilter = generateGlowFilter();
-
   // Main Phoenix firework (center)
   const mainTrail = generateThemeTrail({
     x: centerX,
@@ -395,7 +355,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
 
   const mainSpark = generateSpark(centerX, mainExplosionY, 'white', mainExplosionDelay, loopInterval);
 
-  // Core flash effect
+  // Core flash effect (CSS)
   const coreFlash = generateCoreFlash({
     cx: centerX,
     cy: mainExplosionY,
@@ -405,7 +365,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
     loopInterval,
   });
 
-  // Ring waves
+  // Ring waves (CSS)
   const ringWaves = generateRingWaves({
     cx: centerX,
     cy: mainExplosionY,
@@ -419,13 +379,13 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
   const mainParticles = generateThemeParticles({
     cx: centerX,
     cy: mainExplosionY,
-    particleCount: 24,
+    particleCount: 16,
     distance: 90,
     color: 'orange',
     duration: 1.4,
     delay: mainExplosionDelay,
     loopInterval,
-    applyGlow: true,
+    applyGlow: false,
     id: 'matsuri5-main-particles',
     initialRadius: 5,
   });
@@ -434,29 +394,27 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
   const secondaryParticles = generateThemeParticles({
     cx: centerX,
     cy: mainExplosionY,
-    particleCount: 16,
+    particleCount: 12,
     distance: 55,
     color: 'red',
     duration: 1.0,
     delay: mainExplosionDelay + 0.15,
     loopInterval,
-    applyGlow: true,
+    applyGlow: false,
     id: 'matsuri5-secondary-particles',
     initialRadius: 3,
   });
 
-  // Wide surrounding fireworks (Phoenix wings)
+  // Wide surrounding fireworks (Phoenix wings) - 8 fireworks
   const surroundingFireworks = [
-    { pos: 0.08, delay: 0.1, color: 'red' as FireworkColorName, count: 12 },
-    { pos: 0.92, delay: 0.15, color: 'red' as FireworkColorName, count: 12 },
-    { pos: 0.18, delay: 0.3, color: 'orange' as FireworkColorName, count: 14 },
-    { pos: 0.82, delay: 0.35, color: 'orange' as FireworkColorName, count: 14 },
-    { pos: 0.28, delay: 0.5, color: 'yellow' as FireworkColorName, count: 12 },
-    { pos: 0.72, delay: 0.55, color: 'yellow' as FireworkColorName, count: 12 },
-    { pos: 0.38, delay: 0.7, color: 'champagne' as FireworkColorName, count: 10 },
-    { pos: 0.62, delay: 0.75, color: 'champagne' as FireworkColorName, count: 10 },
-    { pos: 0.15, delay: 0.9, color: 'pink' as FireworkColorName, count: 10 },
-    { pos: 0.85, delay: 0.95, color: 'pink' as FireworkColorName, count: 10 },
+    { pos: 0.08, delay: 0.1, color: 'red' as FireworkColorName, count: 8 },
+    { pos: 0.92, delay: 0.15, color: 'red' as FireworkColorName, count: 8 },
+    { pos: 0.18, delay: 0.3, color: 'orange' as FireworkColorName, count: 10 },
+    { pos: 0.82, delay: 0.35, color: 'orange' as FireworkColorName, count: 10 },
+    { pos: 0.28, delay: 0.5, color: 'yellow' as FireworkColorName, count: 8 },
+    { pos: 0.72, delay: 0.55, color: 'yellow' as FireworkColorName, count: 8 },
+    { pos: 0.38, delay: 0.7, color: 'champagne' as FireworkColorName, count: 8 },
+    { pos: 0.62, delay: 0.75, color: 'champagne' as FireworkColorName, count: 8 },
   ];
 
   const surroundingElements: string[] = [];
@@ -487,16 +445,13 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
       duration: 0.8,
       delay: explosionDelay,
       loopInterval,
-      applyGlow: true,
+      applyGlow: false,
       id: `matsuri5-surround-particles-${i}`,
       initialRadius: 3,
     }));
   }
 
   return `<g id="firework-matsuri-level-5">
-  <defs>
-    ${glowFilter}
-  </defs>
   ${mainTrail}
   ${mainSpark}
   ${coreFlash}
@@ -508,7 +463,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
 }
 
 /**
- * Generates core flash effect for Level 5
+ * Generates core flash effect for Level 5 using CSS animation
  */
 function generateCoreFlash(config: {
   cx: number;
@@ -519,26 +474,15 @@ function generateCoreFlash(config: {
   loopInterval: number;
 }): string {
   const { cx, cy, size, duration, delay, loopInterval } = config;
+  const t0 = delay / loopInterval;
+  const t1 = (delay + duration) / loopInterval;
 
-  const flashStart = delay / loopInterval;
-  const flashEnd = (delay + duration) / loopInterval;
-
-  return `<circle id="matsuri5-core-flash" cx="${cx}" cy="${cy}" r="0" fill="white" opacity="0">
-    <animate attributeName="r"
-             values="0;0;${size};${size * 0.2};0"
-             keyTimes="0;${flashStart.toFixed(4)};${((delay + duration * 0.3) / loopInterval).toFixed(4)};${flashEnd.toFixed(4)};1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-    <animate attributeName="opacity"
-             values="0;0;1;0.3;0;0"
-             keyTimes="0;${flashStart.toFixed(4)};${((delay + duration * 0.2) / loopInterval).toFixed(4)};${((delay + duration * 0.5) / loopInterval).toFixed(4)};${flashEnd.toFixed(4)};1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-  </circle>`;
+  return `<circle id="matsuri5-core-flash" cx="${cx}" cy="${cy}" r="0" fill="white"
+    class="spark" style="--t0:${t0.toFixed(4)};--t1:${t1.toFixed(4)};--max-r:${size};--dur:${loopInterval}s"/>`;
 }
 
 /**
- * Generates ring wave effects for Level 5
+ * Generates ring wave effects for Level 5 using CSS animation
  */
 function generateRingWaves(config: {
   cx: number;
@@ -549,37 +493,17 @@ function generateRingWaves(config: {
   loopInterval: number;
 }): string {
   const { cx, cy, maxSize, stagger, delay, loopInterval } = config;
-
   const rings: string[] = [];
 
   for (let i = 0; i < 2; i++) {
     const ringDelay = delay + i * stagger;
-    const ringStart = ringDelay / loopInterval;
-    const ringEnd = (ringDelay + 0.6) / loopInterval;
+    const t0 = ringDelay / loopInterval;
+    const t1 = (ringDelay + 0.6) / loopInterval;
 
     rings.push(`  <circle id="matsuri5-ring-wave-${i + 1}" cx="${cx}" cy="${cy}" r="0"
-      fill="none" stroke="white" stroke-width="3" opacity="0">
-    <animate attributeName="r"
-             values="0;0;${maxSize};${maxSize}"
-             keyTimes="0;${ringStart.toFixed(4)};${ringEnd.toFixed(4)};1"
-             calcMode="spline"
-             keySplines="0 0 1 1;0.2 0.8 0.4 1;0 0 1 1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-    <animate attributeName="opacity"
-             values="0;0;0.8;0;0"
-             keyTimes="0;${ringStart.toFixed(4)};${((ringDelay + 0.1) / loopInterval).toFixed(4)};${ringEnd.toFixed(4)};1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-    <animate attributeName="stroke-width"
-             values="4;4;4;1;1"
-             keyTimes="0;${ringStart.toFixed(4)};${((ringDelay + 0.1) / loopInterval).toFixed(4)};${ringEnd.toFixed(4)};1"
-             dur="${loopInterval}s" begin="0s"
-             repeatCount="indefinite" />
-  </circle>`);
+      fill="none" stroke="white" stroke-width="3"
+      class="spark" style="--t0:${t0.toFixed(4)};--t1:${t1.toFixed(4)};--max-r:${maxSize};--dur:${loopInterval}s"/>`);
   }
 
-  return `<g id="matsuri5-ring-waves">
-${rings.join('\n')}
-  </g>`;
+  return `<g id="matsuri5-ring-waves">\n${rings.join('\n')}\n  </g>`;
 }
