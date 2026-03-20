@@ -69,6 +69,21 @@ export const ANIMATION = {
 } as const;
 
 // =============================================================================
+// Easing Curves (CSS cubic-bezier)
+// =============================================================================
+
+export const EASING = {
+  /** Trail launch: fast acceleration → deceleration at apex */
+  RISE: 'cubic-bezier(0.4, 0, 0.2, 1)',
+  /** Particle explosion: instant acceleration → slow decay */
+  BURST: 'cubic-bezier(0.0, 0.9, 0.3, 1)',
+  /** Gravity fall: gentle acceleration (natural drop) */
+  GRAVITY: 'cubic-bezier(0.5, 0, 1, 0.5)',
+  /** Fade out: fast dim → slow afterglow */
+  FADE: 'cubic-bezier(0.4, 0, 1, 1)',
+} as const;
+
+// =============================================================================
 // Color Palette
 // =============================================================================
 
@@ -82,18 +97,18 @@ export const FIREWORK_COLORS = {
   blue: '#58a6ff',
   purple: '#bc8cff',
   orange: '#f0883e',
-  pink: '#f778ba',
-  yellow: '#d29922',
+  pink: '#f472b6',
+  yellow: '#fbbf24',
   cyan: '#39c5cf',
   red: '#f85149',
   // Japanese traditional firework colors (和火・伝統色)
-  gold: '#ffd700',
-  silver: '#c0c0c0',
-  wabi: '#cd5c5c',
+  gold: '#f59e0b',
+  silver: '#e2e8f0',
+  wabi: '#e8834a',
   sakura: '#ffb7c5',
   white: '#ffffff',
   champagne: '#f7e7ce',
-  crimson: '#dc143c',
+  crimson: '#ef4444',
 } as const;
 
 export type FireworkColorName = keyof typeof FIREWORK_COLORS;
