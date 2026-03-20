@@ -11,43 +11,6 @@ import type { FireworksLevel } from '../src/services/fireworks-level';
 const THEMES = ['kata', 'matsuri'] as const;
 const LEVELS: FireworksLevel[] = [0, 1, 2, 3, 4, 5];
 
-/**
- * Validates SMIL animation consistency
- * Checks that keyTimes and values arrays have matching lengths
- */
-function validateSMIL(svg: string): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  const animateRegex = /<animate[^>]*>/g;
-  let match;
-
-  while ((match = animateRegex.exec(svg)) !== null) {
-    const animate = match[0];
-    const keyTimesMatch = animate.match(/keyTimes="([^"]+)"/);
-    const valuesMatch = animate.match(/values="([^"]+)"/);
-
-    if (keyTimesMatch && valuesMatch) {
-      const keyTimes = keyTimesMatch[1].split(';');
-      const values = valuesMatch[1].split(';');
-
-      if (keyTimes.length !== values.length) {
-        errors.push(
-          'SMIL mismatch: keyTimes has ' + keyTimes.length + ' values, but values has ' + values.length
-        );
-      }
-    }
-  }
-
-  return { valid: errors.length === 0, errors };
-}
-
-/**
- * Counts specific SVG elements
- */
-function countElements(svg: string, tagName: string): number {
-  const regex = new RegExp('<' + tagName + '[\\s/>]', 'g');
-  return (svg.match(regex) || []).length;
-}
-
 describe('SVG Generator Structure Tests', () => {
   describe('Theme Coverage', () => {
     it.each(THEMES)('should generate valid SVG for theme: %s', (theme) => {
@@ -99,29 +62,8 @@ describe('SVG Generator Structure Tests', () => {
     });
   });
 
-  describe('SMIL Animation Validation', () => {
-    it.each(THEMES)('should have valid SMIL animations for theme: %s', (theme) => {
-      for (const level of LEVELS) {
-        if (level === 0) continue; // Level 0 has no animations
-
-        const svg = generateFireworksSVG({
-          username: 'testuser',
-          commits: level * 7,
-          level,
-          levelName: 'Level ' + level,
-          width: 400,
-          height: 200,
-          theme,
-        });
-
-        const result = validateSMIL(svg);
-        expect(result.valid, 'SMIL validation failed for ' + theme + ' level ' + level + ': ' + result.errors.join(', ')).toBe(true);
-      }
-    });
-  });
-
   describe('Element Count Validation', () => {
-    it('level 0 should have no animate elements in fireworks section', () => {
+    it('level 0 should have no firework elements', () => {
       const svg = generateFireworksSVG({
         username: 'testuser',
         commits: 0,
@@ -139,7 +81,7 @@ describe('SVG Generator Structure Tests', () => {
       expect(svg).not.toContain('firework-matsuri-level-');
     });
 
-    it('higher levels should have more animate elements', () => {
+    it('higher levels should have more particle elements', () => {
       const level1Svg = generateFireworksSVG({
         username: 'testuser',
         commits: 3,
@@ -160,11 +102,11 @@ describe('SVG Generator Structure Tests', () => {
         theme: 'kata',
       });
 
-      const level1Animates = countElements(level1Svg, 'animate');
-      const level5Animates = countElements(level5Svg, 'animate');
+      const level1Particles = (level1Svg.match(/class="particle"/g) || []).length;
+      const level5Particles = (level5Svg.match(/class="particle"/g) || []).length;
 
-      // Level 5 should have more animations than level 1
-      expect(level5Animates).toBeGreaterThan(level1Animates);
+      // Level 5 should have more particles than level 1
+      expect(level5Particles).toBeGreaterThan(level1Particles);
     });
   });
 
@@ -295,6 +237,49 @@ describe('SVG Generator Structure Tests', () => {
         expect(svg).toContain('height="' + dim.height + '"');
         expect(svg).toContain('viewBox="0 0 ' + dim.width + ' ' + dim.height + '"');
       }
+    });
+  });
+
+  describe('CSS Animation Integration', () => {
+    it('should include <style> block with @keyframes', () => {
+      const svg = generateFireworksSVG({
+        username: 'test', commits: 10, level: 3,
+        levelName: 'Test', width: 400, height: 200, theme: 'kata',
+      });
+      expect(svg).toContain('<style>');
+      expect(svg).toContain('@keyframes');
+    });
+
+    it('should include glow gradient defs', () => {
+      const svg = generateFireworksSVG({
+        username: 'test', commits: 10, level: 3,
+        levelName: 'Test', width: 400, height: 200, theme: 'kata',
+      });
+      expect(svg).toContain('radialGradient');
+      expect(svg).toContain('id="glow-');
+    });
+
+    it('should have zero SMIL animate elements for all levels', () => {
+      for (const theme of ['kata', 'matsuri'] as const) {
+        for (const level of [1, 2, 3, 4, 5] as const) {
+          const svg = generateFireworksSVG({
+            username: 'test', commits: level * 7, level,
+            levelName: 'Test', width: 400, height: 200, theme,
+          });
+          expect(svg).not.toContain('<animate ');
+          expect(svg).not.toContain('<animateTransform');
+        }
+      }
+    });
+
+    it('should have zero firework glow filter elements', () => {
+      const svg = generateFireworksSVG({
+        username: 'test', commits: 50, level: 5,
+        levelName: 'Legendary', width: 400, height: 200,
+        theme: 'kata', isExtra: true,
+      });
+      expect(svg).not.toContain('id="fireworkGlow"');
+      expect(svg).not.toContain('feGaussianBlur');
     });
   });
 });

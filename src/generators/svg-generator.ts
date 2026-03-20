@@ -14,6 +14,8 @@ import { generateNightSky } from './svg-background';
 import { generateUserOverlay } from './svg-overlay';
 import { generateFirework, type LevelConfig } from './registry';
 import { generateBackgroundFireworks, generateNiagaraEffect } from './svg-firework-parts';
+import { generateAnimationStyles } from './svg-styles';
+import { generateAllGlowGradients } from './svg-defs';
 
 export interface FireworksSVGConfig {
   /** GitHub username */
@@ -72,6 +74,10 @@ export function generateFireworksSVG(config: FireworksSVGConfig): string {
     isExtra = false,
   } = config;
 
+  // Generate shared CSS animations and glow gradient definitions
+  const styles = generateAnimationStyles();
+  const glowDefs = generateAllGlowGradients();
+
   // Generate each layer
   const nightSky = generateNightSky({ level, username, width, height });
   const fireworks = generateFireworkForLevel(level, width, height, theme ?? 'kata');
@@ -99,9 +105,11 @@ export function generateFireworksSVG(config: FireworksSVGConfig): string {
     : '';
 
   // Combine all layers into complete SVG
-  // Layer order: nightSky → bgFireworks → fireworks → niagara (top) → overlay
+  // Layer order: styles → defs → nightSky → bgFireworks → fireworks → niagara (top) → overlay
   // Niagara is placed on top for maximum "light curtain" impact
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  ${styles}
+  ${glowDefs}
   ${nightSky}
   ${bgFireworks}
   ${fireworks}
