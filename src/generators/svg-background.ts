@@ -59,11 +59,11 @@ export function generateStars(config: StarConfig = {}): string {
   for (let i = 0; i < starCount; i++) {
     const cx = Math.floor(random() * width);
     const cy = Math.floor(random() * height);
-    const beginTime = (random() * 2).toFixed(1); // Stagger animation start 0-2s
+    const delay = (random() * 2).toFixed(1); // Stagger animation start 0-2s
 
-    stars.push(`<circle cx="${cx}" cy="${cy}" r="${STARS.RADIUS}" fill="${STARS.COLOR}">
-      <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" begin="${beginTime}s" repeatCount="indefinite" />
-    </circle>`);
+    stars.push(
+      `<circle cx="${cx}" cy="${cy}" r="${STARS.RADIUS}" fill="${STARS.COLOR}" class="star" style="--delay:${delay}s"/>`
+    );
   }
 
   return stars.join('\n    ');
