@@ -3,7 +3,7 @@
  * Background fireworks and Niagara waterfall effects
  */
 
-import { type FireworkColorName } from '../../constants';
+import { EASING, type FireworkColorName } from '../../constants';
 import { createSeededRandom } from '../../utils/random';
 
 export interface BackgroundFireworksConfig {
@@ -16,8 +16,7 @@ export interface BackgroundFireworksConfig {
 
 /**
  * Generates small background fireworks for ambient effect
- * Uses CSS classes (.trail, .particle) instead of SMIL animations
- * Creates depth and visual interest without overwhelming main fireworks
+ * Each firework generates inline keyframes with timing baked in
  */
 export function generateBackgroundFireworks(config: BackgroundFireworksConfig): string {
   const { canvasWidth, canvasHeight, count, loopDuration, seed = 42 } = config;
@@ -25,40 +24,56 @@ export function generateBackgroundFireworks(config: BackgroundFireworksConfig): 
 
   const colors: FireworkColorName[] = ['blue', 'purple', 'cyan', 'pink', 'green'];
   const elements: string[] = [];
+  const usedKeyframes = new Set<string>();
 
   for (let i = 0; i < count; i++) {
-    // Pseudo-random positions (edges and corners, avoiding center)
     const xRatio = random();
     const x = Math.round(canvasWidth * (xRatio < 0.5 ? xRatio * 0.35 : 0.65 + xRatio * 0.35));
     const y = Math.round(canvasHeight * (0.2 + random() * 0.4));
 
-    // Staggered timing throughout the loop
     const delay = (i / count) * loopDuration * 0.8;
     const trailDuration = 0.4;
     const explosionDelay = delay + trailDuration;
     const explosionDuration = 0.5;
 
     const color = colors[i % colors.length];
-    const particleCount = 4; // reduced from 6
+    const particleCount = 4;
     const distance = 20 + Math.round(random() * 15);
     const startY = canvasHeight;
+    const riseY = y - startY;
 
-    // Trail (CSS animated via .trail class)
-    const t0 = delay / loopDuration;
-    const t1 = (delay + trailDuration) / loopDuration;
+    // Trail keyframe
+    const rt0p = Math.round((delay / loopDuration) * 100);
+    const rt1p = Math.round(((delay + trailDuration) / loopDuration) * 100);
+    const rFadeP = Math.min(rt1p + 5, 99);
+    const rKf = `r-${rt0p}-${rt1p}`;
+
+    if (!usedKeyframes.has(rKf)) {
+      usedKeyframes.add(rKf);
+      elements.push(`<style>@keyframes ${rKf}{0%,${rt0p}%{transform:translateY(0);opacity:0}${rt0p + 1}%{opacity:1}${rt1p}%{transform:translateY(var(--rise-y));opacity:.8}${rFadeP}%{opacity:0}100%{opacity:0}}</style>`);
+    }
+
     elements.push(`<line x1="${x}" y1="${startY}" x2="${x}" y2="${startY}"
       stroke="url(#glow-${color})" stroke-width="1" stroke-linecap="round"
-      class="trail" style="--rise-y:${y - startY}px;--t0:${t0.toFixed(4)};--t1:${t1.toFixed(4)};--dur:${loopDuration}s"/>`);
+      style="--rise-y:${riseY}px;animation:${rKf} ${loopDuration}s ${EASING.RISE} infinite"/>`);
 
-    // Explosion particles (CSS animated via .particle class)
-    const et0 = explosionDelay / loopDuration;
-    const et1 = (explosionDelay + explosionDuration) / loopDuration;
+    // Burst keyframe
+    const bt0p = Math.round((explosionDelay / loopDuration) * 100);
+    const bt1p = Math.round(((explosionDelay + explosionDuration) / loopDuration) * 100);
+    const bFadeP = Math.min(bt1p + 5, 99);
+    const bKf = `b-${bt0p}-${bt1p}`;
+
+    if (!usedKeyframes.has(bKf)) {
+      usedKeyframes.add(bKf);
+      elements.push(`<style>@keyframes ${bKf}{0%,${bt0p}%{transform:translate(0,0);opacity:0}${bt0p + 1}%{opacity:1}${bt1p}%{transform:translate(var(--dx),var(--dy));opacity:.7}${bFadeP}%{opacity:0}100%{opacity:0}}</style>`);
+    }
+
     for (let j = 0; j < particleCount; j++) {
       const angle = (2 * Math.PI * j) / particleCount;
       const dx = Math.round(Math.cos(angle) * distance);
       const dy = Math.round(Math.sin(angle) * distance);
       elements.push(`<circle cx="${x}" cy="${y}" r="4" fill="url(#glow-${color})"
-      class="particle" style="--dx:${dx}px;--dy:${dy}px;--t0:${et0.toFixed(4)};--t1:${et1.toFixed(4)};--dur:${loopDuration}s"/>`);
+      style="--dx:${dx}px;--dy:${dy}px;animation:${bKf} ${loopDuration}s ${EASING.BURST} infinite"/>`);
     }
   }
 
@@ -91,14 +106,12 @@ export interface NiagaraEffectConfig {
 
 /**
  * Generates Niagara waterfall effect (Extra effect)
- * Redesigned: ~40 CSS-animated gradient streams, no SMIL, no filters
- * Wire glow via radialGradient ellipse, bottom fadeout via mask
+ * ~40 CSS-animated gradient streams, no SMIL, no filters
  */
 export function generateNiagaraEffect(config: NiagaraEffectConfig): string {
-  const { canvasWidth, canvasHeight, loopDuration: _loopDuration, seed = 42 } = config;
+  const { canvasWidth, canvasHeight, seed = 42 } = config;
   const random = createSeededRandom(seed);
 
-  // Select color pattern (random if not specified)
   const patternName = config.colorPattern ?? NIAGARA_PATTERN_NAMES[Math.floor(random() * NIAGARA_PATTERN_NAMES.length)];
   const colors = NIAGARA_PATTERNS[patternName];
 
@@ -111,7 +124,6 @@ export function generateNiagaraEffect(config: NiagaraEffectConfig): string {
   const maskId = `nMask-${seed}`;
   const colorGradientId = `nColor-${seed}`;
 
-  // Build vertical color gradient stops
   const colorStops = colors.map((color, i) => {
     const offset = (i / (colors.length - 1)) * 100;
     return `<stop offset="${offset}%" stop-color="${color}"/>`;
@@ -119,7 +131,6 @@ export function generateNiagaraEffect(config: NiagaraEffectConfig): string {
 
   const elements: string[] = [];
 
-  // Local defs: gradients + mask (no filter elements)
   elements.push(`<defs>
     <linearGradient id="${colorGradientId}" x1="0%" y1="0%" x2="0%" y2="100%">
       ${colorStops}
@@ -139,14 +150,11 @@ export function generateNiagaraEffect(config: NiagaraEffectConfig): string {
     </mask>
   </defs>`);
 
-  // Ambient glow behind wire (ellipse with radialGradient, replaces feGaussianBlur)
   elements.push(`<ellipse cx="${Math.round(canvasWidth / 2)}" cy="${wireY}" rx="${Math.round(canvasWidth * 0.45)}" ry="50" fill="url(#${glowId})" opacity="0.6"/>`);
 
-  // Wire lines (no filter, gradient stroke)
   elements.push(`<line x1="10" y1="${wireY}" x2="${canvasWidth - 10}" y2="${wireY}" stroke="${colors[0]}" stroke-width="3" opacity="0.9"/>`);
   elements.push(`<line x1="10" y1="${wireY}" x2="${canvasWidth - 10}" y2="${wireY}" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>`);
 
-  // Main streams (~35 gradient lines with CSS flow animation)
   for (let i = 0; i < streamCount; i++) {
     const spacing = canvasWidth / (streamCount + 1);
     const x = Math.round((i + 1) * spacing + (random() - 0.5) * spacing * 0.4);
@@ -166,7 +174,6 @@ export function generateNiagaraEffect(config: NiagaraEffectConfig): string {
       class="stream" style="--flow-dur:${flowDur}s;--delay:${delayVal}s;--dash-total:${dashTotal}"/>`);
   }
 
-  // White highlight streams (~5)
   for (let i = 0; i < 5; i++) {
     const x = Math.round(canvasWidth * (0.15 + i * 0.18) + (random() - 0.5) * 20);
     const actualHeight = streamHeight * (0.6 + random() * 0.2);

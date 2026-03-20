@@ -26,7 +26,7 @@ describe('Kata levels (CSS)', () => {
 
   it('L1 uses reduced particle count (8)', () => {
     const result = generateKataLevel1(config);
-    const particles = (result.match(/class="particle"/g) || []).length;
+    const particles = (result.match(/animation:b-/g) || []).length;
     expect(particles).toBe(8);
   });
 

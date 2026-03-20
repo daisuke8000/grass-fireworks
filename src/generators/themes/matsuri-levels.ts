@@ -10,6 +10,7 @@
  */
 
 import {
+  EASING,
   generateSpark,
   generateShapedParticles,
   generateReflectionPoints,
@@ -81,8 +82,10 @@ function generateSparklerEffect(config: {
   loopInterval: number;
 }): string {
   const { cx, cy, particleCount, maxDistance, delay, loopInterval } = config;
-  const t0 = delay / loopInterval;
-  const t1 = (delay + 2.0) / loopInterval;
+  const t0p = Math.round((delay / loopInterval) * 100);
+  const t1p = Math.round(((delay + 2.0) / loopInterval) * 100);
+  const fadeP = Math.min(t1p + 5, 99);
+  const kf = `b-${t0p}-${t1p}`;
 
   const particles: string[] = [];
   for (let i = 0; i < particleCount; i++) {
@@ -94,11 +97,14 @@ function generateSparklerEffect(config: {
 
     particles.push(
       `    <circle cx="${cx}" cy="${cy}" r="5" fill="url(#glow-orange)"
-      class="particle" style="--dx:${dx}px;--dy:${dy}px;--t0:${t0.toFixed(4)};--t1:${t1.toFixed(4)};--dur:${loopInterval}s"/>`
+      style="--dx:${dx}px;--dy:${dy}px;animation:${kf} ${loopInterval}s ${EASING.BURST} infinite"/>`
     );
   }
 
-  return `<g id="matsuri1-sparkler" class="sparkler-particles">\n${particles.join('\n')}\n  </g>`;
+  return `<g id="matsuri1-sparkler" class="sparkler-particles">
+  <style>@keyframes ${kf}{0%,${t0p}%{transform:translate(0,0);opacity:0}${t0p + 1}%{opacity:1}${t1p}%{transform:translate(var(--dx),var(--dy));opacity:.7}${fadeP}%{opacity:0}100%{opacity:0}}</style>
+${particles.join('\n')}
+  </g>`;
 }
 
 /**
@@ -474,11 +480,16 @@ function generateCoreFlash(config: {
   loopInterval: number;
 }): string {
   const { cx, cy, size, duration, delay, loopInterval } = config;
-  const t0 = delay / loopInterval;
-  const t1 = (delay + duration) / loopInterval;
+  const t0p = Math.round((delay / loopInterval) * 100);
+  const t1p = Math.round(((delay + duration) / loopInterval) * 100);
+  const midP = Math.round((t0p + t1p) / 2);
+  const kf = `sp-${t0p}-${t1p}`;
 
-  return `<circle id="matsuri5-core-flash" cx="${cx}" cy="${cy}" r="0" fill="white"
-    class="spark" style="--t0:${t0.toFixed(4)};--t1:${t1.toFixed(4)};--max-r:${size};--dur:${loopInterval}s"/>`;
+  return `<g>
+  <style>@keyframes ${kf}{0%,${t0p}%{opacity:0;r:0}${midP}%{opacity:1;r:${size}}${t1p}%{opacity:0;r:0}100%{opacity:0}}</style>
+  <circle id="matsuri5-core-flash" cx="${cx}" cy="${cy}" r="0" fill="white"
+    style="animation:${kf} ${loopInterval}s ease-out infinite"/>
+</g>`;
 }
 
 /**
@@ -494,16 +505,24 @@ function generateRingWaves(config: {
 }): string {
   const { cx, cy, maxSize, stagger, delay, loopInterval } = config;
   const rings: string[] = [];
+  const styles: string[] = [];
 
   for (let i = 0; i < 2; i++) {
     const ringDelay = delay + i * stagger;
-    const t0 = ringDelay / loopInterval;
-    const t1 = (ringDelay + 0.6) / loopInterval;
+    const t0p = Math.round((ringDelay / loopInterval) * 100);
+    const t1p = Math.round(((ringDelay + 0.6) / loopInterval) * 100);
+    const midP = Math.round((t0p + t1p) / 2);
+    const kf = `rw-${t0p}-${t1p}`;
+
+    styles.push(`@keyframes ${kf}{0%,${t0p}%{r:0;opacity:0;stroke-width:4}${midP}%{opacity:.8}${t1p}%{r:${maxSize};opacity:0;stroke-width:1}100%{opacity:0}}`);
 
     rings.push(`  <circle id="matsuri5-ring-wave-${i + 1}" cx="${cx}" cy="${cy}" r="0"
       fill="none" stroke="white" stroke-width="3"
-      class="spark" style="--t0:${t0.toFixed(4)};--t1:${t1.toFixed(4)};--max-r:${maxSize};--dur:${loopInterval}s"/>`);
+      style="animation:${kf} ${loopInterval}s ease-out infinite"/>`);
   }
 
-  return `<g id="matsuri5-ring-waves">\n${rings.join('\n')}\n  </g>`;
+  return `<g id="matsuri5-ring-waves">
+  <style>${styles.join('')}</style>
+${rings.join('\n')}
+  </g>`;
 }

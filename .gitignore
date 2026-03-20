@@ -33,3 +33,7 @@ Thumbs.db
 .idea/
 *.iml
 .vscode/
+
+# DOC
+docs/
+.superpowers/

@@ -102,8 +102,8 @@ describe('SVG Generator Structure Tests', () => {
         theme: 'kata',
       });
 
-      const level1Particles = (level1Svg.match(/class="particle"/g) || []).length;
-      const level5Particles = (level5Svg.match(/class="particle"/g) || []).length;
+      const level1Particles = (level1Svg.match(/animation:b-/g) || []).length;
+      const level5Particles = (level5Svg.match(/animation:b-/g) || []).length;
 
       // Level 5 should have more particles than level 1
       expect(level5Particles).toBeGreaterThan(level1Particles);

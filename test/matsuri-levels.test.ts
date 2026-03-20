@@ -30,9 +30,9 @@ describe('Matsuri levels (CSS)', () => {
     expect(result).toContain('fill="url(#glow-orange)"');
   });
 
-  it('L5 has core flash and ring waves as CSS spark class', () => {
+  it('L5 has core flash and ring waves as CSS animation', () => {
     const result = generateMatsuriLevel5(config);
-    expect(result).toContain('class="spark"');
+    expect(result).toContain('animation:sp-');
     expect(result).toContain('matsuri5-core-flash');
     expect(result).toContain('matsuri5-ring-wave');
   });

@@ -13,7 +13,7 @@
  */
 
 // Re-export constants for backwards compatibility
-export { FIREWORK_COLORS, type FireworkColorName } from '../constants';
+export { FIREWORK_COLORS, EASING, type FireworkColorName } from '../constants';
 
 // Re-export all from parts modules
 export * from './parts';

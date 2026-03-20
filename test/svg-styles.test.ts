@@ -8,36 +8,16 @@ describe('svg-styles', () => {
     expect(result).toMatch(/<\/style>$/);
   });
 
-  it('includes all standard @keyframes', () => {
+  it('includes static @keyframes', () => {
     const result = generateAnimationStyles();
-    expect(result).toContain('@keyframes rise');
-    expect(result).toContain('@keyframes burst');
-    expect(result).toContain('@keyframes burst-gravity');
-    expect(result).toContain('@keyframes fade-out');
     expect(result).toContain('@keyframes twinkle');
     expect(result).toContain('@keyframes flow');
   });
 
-  it('includes easing curves', () => {
+  it('includes star and stream utility classes', () => {
     const result = generateAnimationStyles();
-    expect(result).toContain('cubic-bezier(0.4, 0, 0.2, 1)');
-    expect(result).toContain('cubic-bezier(0.0, 0.9, 0.3, 1)');
-  });
-
-  it('uses CSS custom properties for particle direction', () => {
-    const result = generateAnimationStyles();
-    expect(result).toContain('var(--dx)');
-    expect(result).toContain('var(--dy)');
-  });
-
-  it('includes star twinkle animation', () => {
-    const result = generateAnimationStyles();
-    expect(result).toContain('@keyframes twinkle');
+    expect(result).toContain('.star');
+    expect(result).toContain('.stream');
     expect(result).toContain('ease-in-out');
-  });
-
-  it('includes Niagara flow animation', () => {
-    const result = generateAnimationStyles();
-    expect(result).toContain('@keyframes flow');
   });
 });

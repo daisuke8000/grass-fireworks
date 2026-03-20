@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { generateBackgroundFireworks, generateNiagaraEffect } from '../src/generators/parts/effects';
 
 describe('generateBackgroundFireworks (CSS)', () => {
-  it('outputs CSS classes instead of SMIL', () => {
+  it('outputs inline CSS animation instead of SMIL', () => {
     const result = generateBackgroundFireworks({
       canvasWidth: 400, canvasHeight: 200, count: 3, loopDuration: 4.0,
     });
-    expect(result).toContain('class="trail"');
-    expect(result).toContain('class="particle"');
+    expect(result).toContain('animation:r-');
+    expect(result).toContain('animation:b-');
     expect(result).not.toContain('<animate');
     expect(result).not.toContain('<animateTransform');
   });
@@ -60,7 +60,7 @@ describe('generateNiagaraEffect (redesign)', () => {
     expect(result).toContain('<ellipse');
   });
 
-  it('preserves niagara-effect class for integration', () => {
+  it('preserves niagara-effect class', () => {
     const result = generateNiagaraEffect({
       canvasWidth: 400, canvasHeight: 200, loopDuration: 4.0,
     });
