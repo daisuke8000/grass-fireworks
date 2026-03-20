@@ -4,22 +4,6 @@
  */
 
 /**
- * Generates glow filter for firework effects
- * Enhanced glow with color tint for more vibrant look
- */
-export function generateGlowFilter(): string {
-  return `<filter id="fireworkGlow" x="-100%" y="-100%" width="300%" height="300%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
-    <feColorMatrix in="blur" type="saturate" values="2" result="saturated" />
-    <feMerge>
-      <feMergeNode in="saturated" />
-      <feMergeNode in="blur" />
-      <feMergeNode in="SourceGraphic" />
-    </feMerge>
-  </filter>`;
-}
-
-/**
  * Generates water surface line for Suwa Lake theme
  */
 export function generateWaterSurface(width: number, waterY: number): string {

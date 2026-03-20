@@ -77,8 +77,8 @@ describe('Grass Fireworks', () => {
       });
 
       expect(svg).toMatch(/firework-(kata|matsuri)-level-5/);
-      expect(svg).toContain('<animate');
-      expect(svg).toContain('repeatCount="indefinite"');
+      expect(svg).toContain('class="particle"');
+      expect(svg).toContain('@keyframes');
     });
   });
 

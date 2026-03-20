@@ -13,7 +13,6 @@ export {
 
 // Filter and gradient definitions
 export {
-  generateGlowFilter,
   generateWaterSurface,
   generateWaterGradient,
 } from './filters';
