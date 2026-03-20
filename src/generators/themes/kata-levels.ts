@@ -10,7 +10,6 @@
  */
 
 import {
-  generateGlowFilter,
   generateSpark,
   generateGravityParticles,
   generateRotatingParticles,
@@ -39,8 +38,6 @@ export function generateKataLevel1(config: KataLevelConfig): string {
   const explosionY = Math.round(canvasHeight * 0.38);
   const explosionDelay = TRAIL_DURATION;
 
-  const glowFilter = generateGlowFilter();
-
   const trail = generateThemeTrail({
     x,
     startY,
@@ -57,21 +54,17 @@ export function generateKataLevel1(config: KataLevelConfig): string {
   const particles = generateThemeParticles({
     cx: x,
     cy: explosionY,
-    particleCount: 10,
+    particleCount: 8,
     distance: 35,
     color: 'wabi',
     duration: 1.2,
     delay: explosionDelay,
     loopInterval,
-    applyGlow: true,
     id: 'kata1-particles',
     initialRadius: 3,
   });
 
   return `<g id="firework-kata-level-1">
-  <defs>
-    ${glowFilter}
-  </defs>
   ${trail}
   ${spark}
   ${particles}
@@ -87,14 +80,13 @@ export function generateKataLevel2(config: KataLevelConfig): string {
   const loopInterval = 3.5;
 
   const fireworks = [
-    { pos: 0.35, delay: 0, color: 'pink' as FireworkColorName, count: 14 },
-    { pos: 0.65, delay: 0.5, color: 'sakura' as FireworkColorName, count: 14 },
+    { pos: 0.35, delay: 0, color: 'pink' as FireworkColorName, count: 10 },
+    { pos: 0.65, delay: 0.5, color: 'sakura' as FireworkColorName, count: 10 },
   ];
 
   const startY = canvasHeight;
   const explosionY = Math.round(canvasHeight * 0.35);
 
-  const glowFilter = generateGlowFilter();
   const elements: string[] = [];
 
   for (let i = 0; i < fireworks.length; i++) {
@@ -124,16 +116,12 @@ export function generateKataLevel2(config: KataLevelConfig): string {
       duration: 0.7,
       delay: explosionDelay,
       loopInterval,
-      applyGlow: true,
       id: `kata2-particles-${i}`,
       initialRadius: 4,
     }));
   }
 
   return `<g id="firework-kata-level-2">
-  <defs>
-    ${glowFilter}
-  </defs>
   ${elements.join('\n  ')}
 </g>`;
 }
@@ -155,7 +143,6 @@ export function generateKataLevel3(config: KataLevelConfig): string {
   const startY = canvasHeight;
   const explosionY = Math.round(canvasHeight * 0.35);
 
-  const glowFilter = generateGlowFilter();
   const elements: string[] = [];
 
   for (let i = 0; i < fireworks.length; i++) {
@@ -179,22 +166,18 @@ export function generateKataLevel3(config: KataLevelConfig): string {
     elements.push(generateRotatingParticles({
       cx: x,
       cy: explosionY,
-      particleCount: 16,
+      particleCount: 12,
       distance: 60,
       color: fw.color,
       duration: 1.0,
       delay: explosionDelay,
       loopDuration: loopInterval,
       rotationSpeed: 540,
-      applyGlow: true,
       id: `kata3-rotating-${i}`,
     }));
   }
 
   return `<g id="firework-kata-level-3">
-  <defs>
-    ${glowFilter}
-  </defs>
   ${elements.join('\n  ')}
 </g>`;
 }
@@ -218,7 +201,6 @@ export function generateKataLevel4(config: KataLevelConfig): string {
   const startY = canvasHeight;
   const baseExplosionY = Math.round(canvasHeight * 0.32);
 
-  const glowFilter = generateGlowFilter();
   const elements: string[] = [];
 
   for (let i = 0; i < fireworks.length; i++) {
@@ -243,22 +225,18 @@ export function generateKataLevel4(config: KataLevelConfig): string {
     elements.push(generateGravityParticles({
       cx: x,
       cy: explosionY,
-      particleCount: i === 0 ? 20 : 14,
+      particleCount: i === 0 ? 14 : 10,
       distance: i === 0 ? 70 : 50,
       color: 'gold',
       duration: 1.4,
       delay: explosionDelay,
       loopDuration: loopInterval,
       gravityDrop: 45,
-      applyGlow: true,
       id: `kata4-gravity-${i}`,
     }));
   }
 
   return `<g id="firework-kata-level-4">
-  <defs>
-    ${glowFilter}
-  </defs>
   ${elements.join('\n  ')}
 </g>`;
 }
@@ -275,8 +253,6 @@ export function generateKataLevel5(config: KataLevelConfig): string {
   const startY = canvasHeight;
   const mainExplosionY = Math.round(canvasHeight * 0.30);
   const mainExplosionDelay = TRAIL_DURATION;
-
-  const glowFilter = generateGlowFilter();
 
   // Main gold trail
   const mainTrail = generateThemeTrail({
@@ -296,14 +272,13 @@ export function generateKataLevel5(config: KataLevelConfig): string {
   const mainParticles = generateGravityParticles({
     cx: centerX,
     cy: mainExplosionY,
-    particleCount: 24,
+    particleCount: 16,
     distance: 85,
     color: 'gold',
     duration: 1.6,
     delay: mainExplosionDelay,
     loopDuration: loopInterval,
     gravityDrop: 50,
-    applyGlow: true,
     id: 'kata5-main-gravity',
   });
 
@@ -311,13 +286,12 @@ export function generateKataLevel5(config: KataLevelConfig): string {
   const silverParticles = generateThemeParticles({
     cx: centerX,
     cy: mainExplosionY,
-    particleCount: 16,
+    particleCount: 12,
     distance: 45,
     color: 'silver',
     duration: 0.8,
     delay: mainExplosionDelay + 0.1,
     loopInterval,
-    applyGlow: true,
     id: 'kata5-silver',
     initialRadius: 3,
   });
@@ -330,8 +304,6 @@ export function generateKataLevel5(config: KataLevelConfig): string {
     { pos: 0.75, delay: 0.6, color: 'champagne' as FireworkColorName },
     { pos: 0.35, delay: 0.8, color: 'silver' as FireworkColorName },
     { pos: 0.65, delay: 0.9, color: 'gold' as FireworkColorName },
-    { pos: 0.1, delay: 1.1, color: 'champagne' as FireworkColorName },
-    { pos: 0.9, delay: 1.2, color: 'silver' as FireworkColorName },
   ];
 
   const surroundingElements: string[] = [];
@@ -356,22 +328,18 @@ export function generateKataLevel5(config: KataLevelConfig): string {
     surroundingElements.push(generateThemeParticles({
       cx: x,
       cy: explosionY,
-      particleCount: 10,
+      particleCount: 8,
       distance: 35,
       color: fw.color,
       duration: 0.7,
       delay: explosionDelay,
       loopInterval,
-      applyGlow: true,
       id: `kata5-surround-particles-${i}`,
       initialRadius: 2,
     }));
   }
 
   return `<g id="firework-kata-level-5">
-  <defs>
-    ${glowFilter}
-  </defs>
   ${mainTrail}
   ${mainSpark}
   ${mainParticles}
