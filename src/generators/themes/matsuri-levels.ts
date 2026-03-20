@@ -10,7 +10,6 @@
  */
 
 import {
-  EASING,
   generateSpark,
   generateShapedParticles,
   generateReflectionPoints,
@@ -71,7 +70,7 @@ export function generateMatsuriLevel1(config: MatsuriLevelConfig): string {
 }
 
 /**
- * Generates sparkler-like twinkling particles using CSS animation
+ * Generates sparkler-like twinkling particles using SMIL animation
  */
 function generateSparklerEffect(config: {
   cx: number;
@@ -82,29 +81,40 @@ function generateSparklerEffect(config: {
   loopInterval: number;
 }): string {
   const { cx, cy, particleCount, maxDistance, delay, loopInterval } = config;
-  const t0p = Math.round((delay / loopInterval) * 100);
-  const t1p = Math.round(((delay + 2.0) / loopInterval) * 100);
-  const fadeP = Math.min(t1p + 5, 99);
-  const kf = `b-${t0p}-${t1p}`;
 
   const particles: string[] = [];
+  const explosionStart = delay / loopInterval;
+  const explosionEnd = (delay + 2.0) / loopInterval;
+
   for (let i = 0; i < particleCount; i++) {
     const angle = (2 * Math.PI * i) / particleCount;
     const distanceVariation = 0.6 + 0.4 * ((i * 7 + 3) % 10) / 10;
     const distance = maxDistance * distanceVariation;
     const dx = Math.round(Math.cos(angle) * distance);
     const dy = Math.round(Math.sin(angle) * distance);
+    const twinkleOffset = (i * 0.15) / loopInterval;
 
-    particles.push(
-      `    <circle cx="${cx}" cy="${cy}" r="5" fill="url(#glow-orange)"
-      style="--dx:${dx}px;--dy:${dy}px;animation:${kf} ${loopInterval}s ${EASING.BURST} infinite"/>`
-    );
+    particles.push(`    <circle cx="${cx}" cy="${cy}" r="5" fill="url(#glow-orange)" opacity="0">
+      <animateTransform attributeName="transform"
+                        type="translate"
+                        values="0 0;0 0;${dx} ${dy};${dx} ${dy + 15}"
+                        keyTimes="0;${explosionStart.toFixed(4)};${((delay + 1.0) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)}"
+                        dur="${loopInterval}s" begin="0s"
+                        repeatCount="indefinite" />
+      <animate attributeName="opacity"
+               values="0;0;1;0.8;0.4;0"
+               keyTimes="0;${(explosionStart + twinkleOffset).toFixed(4)};${((delay + 0.2) / loopInterval + twinkleOffset).toFixed(4)};${((delay + 0.8) / loopInterval).toFixed(4)};${((delay + 1.5) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)}"
+               dur="${loopInterval}s" begin="0s"
+               repeatCount="indefinite" />
+      <animate attributeName="r"
+               values="2;2;5;3;1"
+               keyTimes="0;${explosionStart.toFixed(4)};${((delay + 0.3) / loopInterval).toFixed(4)};${((delay + 1.0) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)}"
+               dur="${loopInterval}s" begin="0s"
+               repeatCount="indefinite" />
+    </circle>`);
   }
 
-  return `<g id="matsuri1-sparkler" class="sparkler-particles">
-  <style>@keyframes ${kf}{0%,${t0p}%{transform:translate(0,0);opacity:0}${t0p + 1}%{opacity:1}${t1p}%{transform:translate(var(--dx),var(--dy));opacity:.7}${fadeP}%{opacity:0}100%{opacity:0}}</style>
-${particles.join('\n')}
-  </g>`;
+  return `<g id="matsuri1-sparkler" class="sparkler-particles">\n${particles.join('\n')}\n  </g>`;
 }
 
 /**
@@ -361,7 +371,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
 
   const mainSpark = generateSpark(centerX, mainExplosionY, 'white', mainExplosionDelay, loopInterval);
 
-  // Core flash effect (CSS)
+  // Core flash effect (SMIL)
   const coreFlash = generateCoreFlash({
     cx: centerX,
     cy: mainExplosionY,
@@ -371,7 +381,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
     loopInterval,
   });
 
-  // Ring waves (CSS)
+  // Ring waves (SMIL)
   const ringWaves = generateRingWaves({
     cx: centerX,
     cy: mainExplosionY,
@@ -469,7 +479,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
 }
 
 /**
- * Generates core flash effect for Level 5 using CSS animation
+ * Generates core flash effect for Level 5 using SMIL animation
  */
 function generateCoreFlash(config: {
   cx: number;
@@ -480,20 +490,26 @@ function generateCoreFlash(config: {
   loopInterval: number;
 }): string {
   const { cx, cy, size, duration, delay, loopInterval } = config;
-  const t0p = Math.round((delay / loopInterval) * 100);
-  const t1p = Math.round(((delay + duration) / loopInterval) * 100);
-  const midP = Math.round((t0p + t1p) / 2);
-  const kf = `sp-${t0p}-${t1p}`;
 
-  return `<g>
-  <style>@keyframes ${kf}{0%,${t0p}%{opacity:0;r:0}${midP}%{opacity:1;r:${size}}${t1p}%{opacity:0;r:0}100%{opacity:0}}</style>
-  <circle id="matsuri5-core-flash" cx="${cx}" cy="${cy}" r="0" fill="white"
-    style="animation:${kf} ${loopInterval}s ease-out infinite"/>
-</g>`;
+  const flashStart = delay / loopInterval;
+  const flashEnd = (delay + duration) / loopInterval;
+
+  return `<circle id="matsuri5-core-flash" cx="${cx}" cy="${cy}" r="0" fill="white" opacity="0">
+    <animate attributeName="r"
+             values="0;0;${size};${Math.round(size * 0.2)};0"
+             keyTimes="0;${flashStart.toFixed(4)};${((delay + duration * 0.3) / loopInterval).toFixed(4)};${flashEnd.toFixed(4)};1"
+             dur="${loopInterval}s" begin="0s"
+             repeatCount="indefinite" />
+    <animate attributeName="opacity"
+             values="0;0;1;0.3;0;0"
+             keyTimes="0;${flashStart.toFixed(4)};${((delay + duration * 0.2) / loopInterval).toFixed(4)};${((delay + duration * 0.5) / loopInterval).toFixed(4)};${flashEnd.toFixed(4)};1"
+             dur="${loopInterval}s" begin="0s"
+             repeatCount="indefinite" />
+  </circle>`;
 }
 
 /**
- * Generates ring wave effects for Level 5 using CSS animation
+ * Generates ring wave effects for Level 5 using SMIL animation
  */
 function generateRingWaves(config: {
   cx: number;
@@ -504,25 +520,35 @@ function generateRingWaves(config: {
   loopInterval: number;
 }): string {
   const { cx, cy, maxSize, stagger, delay, loopInterval } = config;
+
   const rings: string[] = [];
-  const styles: string[] = [];
 
   for (let i = 0; i < 2; i++) {
     const ringDelay = delay + i * stagger;
-    const t0p = Math.round((ringDelay / loopInterval) * 100);
-    const t1p = Math.round(((ringDelay + 0.6) / loopInterval) * 100);
-    const midP = Math.round((t0p + t1p) / 2);
-    const kf = `rw-${t0p}-${t1p}`;
-
-    styles.push(`@keyframes ${kf}{0%,${t0p}%{r:0;opacity:0;stroke-width:4}${midP}%{opacity:.8}${t1p}%{r:${maxSize};opacity:0;stroke-width:1}100%{opacity:0}}`);
+    const ringStart = ringDelay / loopInterval;
+    const ringEnd = (ringDelay + 0.6) / loopInterval;
 
     rings.push(`  <circle id="matsuri5-ring-wave-${i + 1}" cx="${cx}" cy="${cy}" r="0"
-      fill="none" stroke="white" stroke-width="3"
-      style="animation:${kf} ${loopInterval}s ease-out infinite"/>`);
+      fill="none" stroke="white" stroke-width="3" opacity="0">
+    <animate attributeName="r"
+             values="0;0;${maxSize};${maxSize}"
+             keyTimes="0;${ringStart.toFixed(4)};${ringEnd.toFixed(4)};1"
+             calcMode="spline"
+             keySplines="0 0 1 1;0 0.9 0.3 1;0 0 1 1"
+             dur="${loopInterval}s" begin="0s"
+             repeatCount="indefinite" />
+    <animate attributeName="opacity"
+             values="0;0;0.8;0;0"
+             keyTimes="0;${ringStart.toFixed(4)};${((ringDelay + 0.1) / loopInterval).toFixed(4)};${ringEnd.toFixed(4)};1"
+             dur="${loopInterval}s" begin="0s"
+             repeatCount="indefinite" />
+    <animate attributeName="stroke-width"
+             values="4;4;4;1;1"
+             keyTimes="0;${ringStart.toFixed(4)};${((ringDelay + 0.1) / loopInterval).toFixed(4)};${ringEnd.toFixed(4)};1"
+             dur="${loopInterval}s" begin="0s"
+             repeatCount="indefinite" />
+  </circle>`);
   }
 
-  return `<g id="matsuri5-ring-waves">
-  <style>${styles.join('')}</style>
-${rings.join('\n')}
-  </g>`;
+  return `<g id="matsuri5-ring-waves">\n${rings.join('\n')}\n  </g>`;
 }

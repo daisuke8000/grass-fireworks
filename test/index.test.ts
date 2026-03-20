@@ -66,7 +66,7 @@ describe('Grass Fireworks', () => {
       expect(svg).toContain('viewBox="0 0 600 300"');
     });
 
-    it('should generate firework animations for level 5', () => {
+    it('should generate SMIL firework animations for level 5', () => {
       const svg = generateFireworksSVG({
         username: 'test',
         commits: 35,
@@ -77,7 +77,7 @@ describe('Grass Fireworks', () => {
       });
 
       expect(svg).toMatch(/firework-(kata|matsuri)-level-5/);
-      expect(svg).toContain('animation:b-');
+      expect(svg).toContain('<animate');
       expect(svg).toContain('@keyframes');
     });
   });

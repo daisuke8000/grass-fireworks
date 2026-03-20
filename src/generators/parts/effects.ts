@@ -3,7 +3,7 @@
  * Background fireworks and Niagara waterfall effects
  */
 
-import { EASING, type FireworkColorName } from '../../constants';
+import type { FireworkColorName } from '../../constants';
 import { createSeededRandom } from '../../utils/random';
 
 export interface BackgroundFireworksConfig {
@@ -16,7 +16,7 @@ export interface BackgroundFireworksConfig {
 
 /**
  * Generates small background fireworks for ambient effect
- * Each firework generates inline keyframes with timing baked in
+ * Uses SMIL animations with glow gradient fills
  */
 export function generateBackgroundFireworks(config: BackgroundFireworksConfig): string {
   const { canvasWidth, canvasHeight, count, loopDuration, seed = 42 } = config;
@@ -24,7 +24,6 @@ export function generateBackgroundFireworks(config: BackgroundFireworksConfig): 
 
   const colors: FireworkColorName[] = ['blue', 'purple', 'cyan', 'pink', 'green'];
   const elements: string[] = [];
-  const usedKeyframes = new Set<string>();
 
   for (let i = 0; i < count; i++) {
     const xRatio = random();
@@ -39,41 +38,41 @@ export function generateBackgroundFireworks(config: BackgroundFireworksConfig): 
     const color = colors[i % colors.length];
     const particleCount = 4;
     const distance = 20 + Math.round(random() * 15);
+
+    const trailEnd = (delay + trailDuration) / loopDuration;
+    const fadeEnd = Math.min((delay + trailDuration + 0.2) / loopDuration, 0.99);
     const startY = canvasHeight;
-    const riseY = y - startY;
-
-    // Trail keyframe
-    const rt0p = Math.round((delay / loopDuration) * 100);
-    const rt1p = Math.round(((delay + trailDuration) / loopDuration) * 100);
-    const rFadeP = Math.min(rt1p + 5, 99);
-    const rKf = `r-${rt0p}-${rt1p}`;
-
-    if (!usedKeyframes.has(rKf)) {
-      usedKeyframes.add(rKf);
-      elements.push(`<style>@keyframes ${rKf}{0%,${rt0p}%{transform:translateY(0);opacity:0}${rt0p + 1}%{opacity:1}${rt1p}%{transform:translateY(var(--rise-y));opacity:.8}${rFadeP}%{opacity:0}100%{opacity:0}}</style>`);
-    }
 
     elements.push(`<line x1="${x}" y1="${startY}" x2="${x}" y2="${startY}"
-      stroke="url(#glow-${color})" stroke-width="1" stroke-linecap="round"
-      style="--rise-y:${riseY}px;animation:${rKf} ${loopDuration}s ${EASING.RISE} infinite"/>`);
+      stroke="url(#glow-${color})" stroke-width="1" stroke-linecap="round" opacity="0">
+    <animate attributeName="y2"
+             values="${startY};${startY};${y};${y}"
+             keyTimes="0;${(delay / loopDuration).toFixed(4)};${trailEnd.toFixed(4)};1"
+             dur="${loopDuration}s" begin="0s" repeatCount="indefinite" />
+    <animate attributeName="opacity"
+             values="0;0;0.6;0.3;0;0"
+             keyTimes="0;${(delay / loopDuration).toFixed(4)};${((delay + 0.05) / loopDuration).toFixed(4)};${trailEnd.toFixed(4)};${fadeEnd.toFixed(4)};1"
+             dur="${loopDuration}s" begin="0s" repeatCount="indefinite" />
+  </line>`);
 
-    // Burst keyframe
-    const bt0p = Math.round((explosionDelay / loopDuration) * 100);
-    const bt1p = Math.round(((explosionDelay + explosionDuration) / loopDuration) * 100);
-    const bFadeP = Math.min(bt1p + 5, 99);
-    const bKf = `b-${bt0p}-${bt1p}`;
-
-    if (!usedKeyframes.has(bKf)) {
-      usedKeyframes.add(bKf);
-      elements.push(`<style>@keyframes ${bKf}{0%,${bt0p}%{transform:translate(0,0);opacity:0}${bt0p + 1}%{opacity:1}${bt1p}%{transform:translate(var(--dx),var(--dy));opacity:.7}${bFadeP}%{opacity:0}100%{opacity:0}}</style>`);
-    }
+    const expStart = explosionDelay / loopDuration;
+    const expEnd = (explosionDelay + explosionDuration) / loopDuration;
 
     for (let j = 0; j < particleCount; j++) {
       const angle = (2 * Math.PI * j) / particleCount;
       const dx = Math.round(Math.cos(angle) * distance);
       const dy = Math.round(Math.sin(angle) * distance);
-      elements.push(`<circle cx="${x}" cy="${y}" r="4" fill="url(#glow-${color})"
-      style="--dx:${dx}px;--dy:${dy}px;animation:${bKf} ${loopDuration}s ${EASING.BURST} infinite"/>`);
+
+      elements.push(`<circle cx="${x}" cy="${y}" r="4" fill="url(#glow-${color})" opacity="0">
+      <animateTransform attributeName="transform" type="translate"
+                        values="0 0;0 0;${dx} ${dy};${dx} ${dy}"
+                        keyTimes="0;${expStart.toFixed(4)};${expEnd.toFixed(4)};1"
+                        dur="${loopDuration}s" begin="0s" repeatCount="indefinite" />
+      <animate attributeName="opacity"
+               values="0;0;0.7;0;0"
+               keyTimes="0;${expStart.toFixed(4)};${((explosionDelay + 0.08) / loopDuration).toFixed(4)};${expEnd.toFixed(4)};1"
+               dur="${loopDuration}s" begin="0s" repeatCount="indefinite" />
+    </circle>`);
     }
   }
 

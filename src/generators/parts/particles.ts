@@ -1,15 +1,13 @@
 /**
  * Particle Generation Functions
- * Core building blocks for firework animations using CSS @keyframes.
+ * Core building blocks for firework animations using SMIL.
  *
- * Each function generates inline <style> blocks with timing-specific keyframes.
- * Keyframe names encode timing (e.g., "r-0-15" = rise from 0% to 15%).
- * CSS custom properties (--dx, --dy, --rise-y, --drop) provide per-element
- * direction in keyframe VALUES (valid CSS), while timing is baked into
- * static keyframe SELECTORS (required by CSS spec).
+ * Uses <animate> / <animateTransform> for motion (cross-browser reliable)
+ * and fill="url(#glow-{color})" radialGradient for glow effects
+ * (replaces the old feGaussianBlur filter approach).
  */
 
-import { EASING, type FireworkColorName } from '../../constants';
+import type { FireworkColorName } from '../../constants';
 import type { Position } from './shapes';
 
 // ============================================================================
@@ -28,23 +26,36 @@ export interface ThemeTrailConfig {
 }
 
 /**
- * Generates a rising trail with inline CSS keyframes
+ * Generates a rising trail with SMIL keyTimes-based timing
+ * All animations share the same loop, synchronized via keyTimes
  */
 export function generateThemeTrail(config: ThemeTrailConfig): string {
   const { x, startY, endY, color, duration, delay, loopInterval, id } = config;
   const trailId = id ? ` id="${id}"` : '';
-  const riseY = endY - startY;
-  const t0p = Math.round((delay / loopInterval) * 100);
-  const t1p = Math.round(((delay + duration) / loopInterval) * 100);
-  const fadeP = Math.min(t1p + 5, 99);
-  const kf = `r-${t0p}-${t1p}`;
 
-  return `<g>
-  <style>@keyframes ${kf}{0%,${t0p}%{transform:translateY(0);opacity:0}${t0p + 1}%{opacity:1}${t1p}%{transform:translateY(var(--rise-y));opacity:.8}${fadeP}%{opacity:0}100%{opacity:0}}</style>
-  <line${trailId} x1="${x}" y1="${startY}" x2="${x}" y2="${startY}"
-    stroke="url(#glow-${color})" stroke-width="3" stroke-linecap="round"
-    style="--rise-y:${riseY}px;animation:${kf} ${loopInterval}s ${EASING.RISE} infinite"/>
-</g>`;
+  const trailEnd = (delay + duration) / loopInterval;
+  const fadeEnd = Math.min((delay + duration + 0.3) / loopInterval, 0.99);
+
+  return `<line${trailId} x1="${x}" y1="${startY}" x2="${x}" y2="${startY}"
+      stroke="url(#glow-${color})" stroke-width="3" stroke-linecap="round" opacity="0">
+    <animate attributeName="y2"
+             values="${startY};${startY};${endY};${endY}"
+             keyTimes="0;${(delay / loopInterval).toFixed(4)};${trailEnd.toFixed(4)};1"
+             calcMode="spline"
+             keySplines="0 0 1 1;0.4 0 0.2 1;0 0 1 1"
+             dur="${loopInterval}s" begin="0s"
+             repeatCount="indefinite" />
+    <animate attributeName="y1"
+             values="${startY};${startY};${startY};${endY};${endY}"
+             keyTimes="0;${(delay / loopInterval).toFixed(4)};${((delay + duration * 0.5) / loopInterval).toFixed(4)};${fadeEnd.toFixed(4)};1"
+             dur="${loopInterval}s" begin="0s"
+             repeatCount="indefinite" />
+    <animate attributeName="opacity"
+             values="0;0;1;0.8;0;0"
+             keyTimes="0;${(delay / loopInterval).toFixed(4)};${((delay + 0.05) / loopInterval).toFixed(4)};${trailEnd.toFixed(4)};${fadeEnd.toFixed(4)};1"
+             dur="${loopInterval}s" begin="0s"
+             repeatCount="indefinite" />
+  </line>`;
 }
 
 export interface ThemeParticleConfig {
@@ -62,7 +73,8 @@ export interface ThemeParticleConfig {
 }
 
 /**
- * Generates burst particles with inline CSS keyframes
+ * Generates burst particles with SMIL keyTimes-based timing
+ * Particles expand, shrink, and fade in sync with the loop
  */
 export function generateThemeParticles(config: ThemeParticleConfig): string {
   const {
@@ -70,47 +82,66 @@ export function generateThemeParticles(config: ThemeParticleConfig): string {
     duration, delay, loopInterval, id, initialRadius = 4,
   } = config;
   const groupId = id ? ` id="${id}"` : '';
-  const t0p = Math.round((delay / loopInterval) * 100);
-  const t1p = Math.round(((delay + duration) / loopInterval) * 100);
-  const fadeP = Math.min(t1p + 5, 99);
+
+  const explosionStart = delay / loopInterval;
+  const explosionEnd = (delay + duration) / loopInterval;
   const r = Math.round(initialRadius * 2.5);
-  const kf = `b-${t0p}-${t1p}`;
 
   const particles: string[] = [];
+
   for (let i = 0; i < particleCount; i++) {
     const angle = (2 * Math.PI * i) / particleCount;
     const dx = Math.round(Math.cos(angle) * distance);
     const dy = Math.round(Math.sin(angle) * distance);
 
-    particles.push(
-      `    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#glow-${color})"
-      style="--dx:${dx}px;--dy:${dy}px;animation:${kf} ${loopInterval}s ${EASING.BURST} infinite"/>`
-    );
+    particles.push(`    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#glow-${color})" opacity="0">
+      <animateTransform attributeName="transform"
+                        type="translate"
+                        values="0 0;0 0;${dx} ${dy};${dx} ${dy}"
+                        keyTimes="0;${explosionStart.toFixed(4)};${explosionEnd.toFixed(4)};1"
+                        calcMode="spline"
+                        keySplines="0 0 1 1;0 0.9 0.3 1;0 0 1 1"
+                        dur="${loopInterval}s" begin="0s"
+                        repeatCount="indefinite" />
+      <animate attributeName="opacity"
+               values="0;0;1;0.7;0;0"
+               keyTimes="0;${explosionStart.toFixed(4)};${((delay + 0.05) / loopInterval).toFixed(4)};${((delay + duration * 0.7) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)};1"
+               dur="${loopInterval}s" begin="0s"
+               repeatCount="indefinite" />
+      <animate attributeName="r"
+               values="${r};${r};${r};${Math.round(r * 0.3)};${Math.round(r * 0.3)}"
+               keyTimes="0;${explosionStart.toFixed(4)};${((delay + 0.1) / loopInterval).toFixed(4)};${explosionEnd.toFixed(4)};1"
+               dur="${loopInterval}s" begin="0s"
+               repeatCount="indefinite" />
+    </circle>`);
   }
 
-  return `<g${groupId} class="firework-particles">
-  <style>@keyframes ${kf}{0%,${t0p}%{transform:translate(0,0);opacity:0}${t0p + 1}%{opacity:1}${t1p}%{transform:translate(var(--dx),var(--dy));opacity:.7}${fadeP}%{opacity:0}100%{opacity:0}}</style>
-${particles.join('\n')}
-  </g>`;
+  return `<g${groupId} class="firework-particles">\n${particles.join('\n')}\n  </g>`;
 }
 
 /**
- * Generates a spark/twinkle flash effect
+ * Generates a spark/twinkle flash effect using SMIL
  */
 export function generateSpark(
   cx: number, cy: number, color: FireworkColorName,
   delay: number, loopDuration: number
 ): string {
-  const t0p = Math.round((delay / loopDuration) * 100);
-  const t1p = Math.round(((delay + 0.3) / loopDuration) * 100);
-  const midP = Math.round((t0p + t1p) / 2);
-  const kf = `sp-${t0p}-${t1p}`;
+  const sparkDuration = 0.3;
+  const sparkStart = delay / loopDuration;
+  const sparkEnd = (delay + sparkDuration) / loopDuration;
 
-  return `<g>
-  <style>@keyframes ${kf}{0%,${t0p}%{opacity:0;r:0}${midP}%{opacity:1;r:8}${t1p}%{opacity:0;r:0}100%{opacity:0}}</style>
-  <circle cx="${cx}" cy="${cy}" r="0" fill="white"
-    style="animation:${kf} ${loopDuration}s ease-out infinite"/>
-</g>`;
+  return `<circle cx="${cx}" cy="${cy}" r="0" fill="white" opacity="0">
+    <animate attributeName="r"
+             values="0;0;8;0;0"
+             keyTimes="0;${sparkStart.toFixed(3)};${((sparkStart + sparkEnd) / 2).toFixed(3)};${sparkEnd.toFixed(3)};1"
+             dur="${loopDuration}s" begin="0s"
+             repeatCount="indefinite" />
+    <animate attributeName="opacity"
+             values="0;0;1;0;0"
+             keyTimes="0;${sparkStart.toFixed(3)};${((sparkStart + sparkEnd) / 2).toFixed(3)};${sparkEnd.toFixed(3)};1"
+             dur="${loopDuration}s" begin="0s"
+             repeatCount="indefinite" />
+  </circle>`;
 }
 
 // ============================================================================
@@ -132,36 +163,58 @@ export interface RotatingParticleConfig {
 }
 
 /**
- * Generates burst particles (simplified from rotating SMIL)
+ * Generates rotating particles (Hachi/Bee style) using SMIL
+ * Particles rotate as they expand outward
  */
 export function generateRotatingParticles(config: RotatingParticleConfig): string {
   const {
     cx, cy, particleCount, distance, color,
-    duration, delay, loopDuration, id,
+    duration, delay, loopDuration,
+    rotationSpeed = 720, id,
   } = config;
   const groupId = id ? ` id="${id}"` : '';
-  const t0p = Math.round((delay / loopDuration) * 100);
-  const t1p = Math.round(((delay + duration) / loopDuration) * 100);
-  const fadeP = Math.min(t1p + 5, 99);
   const r = 8;
-  const kf = `b-${t0p}-${t1p}`;
+
+  const explosionStart = delay / loopDuration;
+  const explosionEnd = (delay + duration) / loopDuration;
 
   const particles: string[] = [];
+
   for (let i = 0; i < particleCount; i++) {
     const angle = (2 * Math.PI * i) / particleCount;
     const dx = Math.round(Math.cos(angle) * distance);
     const dy = Math.round(Math.sin(angle) * distance);
 
-    particles.push(
-      `    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#glow-${color})"
-      style="--dx:${dx}px;--dy:${dy}px;animation:${kf} ${loopDuration}s ${EASING.BURST} infinite"/>`
-    );
+    particles.push(`    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#glow-${color})" opacity="0">
+      <animateTransform attributeName="transform"
+                        type="translate"
+                        values="0 0;0 0;${dx} ${dy};${dx} ${dy}"
+                        keyTimes="0;${explosionStart.toFixed(3)};${explosionEnd.toFixed(3)};1"
+                        calcMode="spline"
+                        keySplines="0 0 1 1;0 0.9 0.3 1;0 0 1 1"
+                        dur="${loopDuration}s" begin="0s"
+                        repeatCount="indefinite" />
+      <animateTransform attributeName="transform"
+                        type="rotate"
+                        values="0 ${cx} ${cy};0 ${cx} ${cy};${rotationSpeed} ${cx} ${cy};${rotationSpeed} ${cx} ${cy}"
+                        keyTimes="0;${explosionStart.toFixed(3)};${explosionEnd.toFixed(3)};1"
+                        dur="${loopDuration}s" begin="0s"
+                        repeatCount="indefinite"
+                        additive="sum" />
+      <animate attributeName="opacity"
+               values="0;0;1;0;0"
+               keyTimes="0;${explosionStart.toFixed(3)};${((delay + 0.1) / loopDuration).toFixed(3)};${explosionEnd.toFixed(3)};1"
+               dur="${loopDuration}s" begin="0s"
+               repeatCount="indefinite" />
+      <animate attributeName="r"
+               values="${r};${r};${r};${Math.round(r * 0.3)};${Math.round(r * 0.3)}"
+               keyTimes="0;${explosionStart.toFixed(3)};${((delay + 0.1) / loopDuration).toFixed(3)};${explosionEnd.toFixed(3)};1"
+               dur="${loopDuration}s" begin="0s"
+               repeatCount="indefinite" />
+    </circle>`);
   }
 
-  return `<g${groupId} class="rotating-particles">
-  <style>@keyframes ${kf}{0%,${t0p}%{transform:translate(0,0);opacity:0}${t0p + 1}%{opacity:1}${t1p}%{transform:translate(var(--dx),var(--dy));opacity:.7}${fadeP}%{opacity:0}100%{opacity:0}}</style>
-${particles.join('\n')}
-  </g>`;
+  return `<g${groupId} class="rotating-particles">\n${particles.join('\n')}\n  </g>`;
 }
 
 export interface GravityParticleConfig {
@@ -179,7 +232,8 @@ export interface GravityParticleConfig {
 }
 
 /**
- * Generates particles with gravity droop effect (Kankiku/Weeping Willow)
+ * Generates particles with gravity effect (Kankiku/Weeping Willow style) using SMIL
+ * Particles expand then droop downward
  */
 export function generateGravityParticles(config: GravityParticleConfig): string {
   const {
@@ -187,29 +241,43 @@ export function generateGravityParticles(config: GravityParticleConfig): string 
     duration, delay, loopDuration, gravityDrop = 40, id,
   } = config;
   const groupId = id ? ` id="${id}"` : '';
-  const t0p = Math.round((delay / loopDuration) * 100);
-  const t1p = Math.round(((delay + duration * 0.4) / loopDuration) * 100);
-  const t2p = Math.round(((delay + duration) / loopDuration) * 100);
-  const fadeP = Math.min(t2p + 3, 99);
   const r = 10;
-  const kf = `bg-${t0p}-${t1p}-${t2p}`;
+
+  const explosionStart = delay / loopDuration;
+  const expandEnd = (delay + duration * 0.4) / loopDuration;
+  const droopEnd = (delay + duration) / loopDuration;
 
   const particles: string[] = [];
+
   for (let i = 0; i < particleCount; i++) {
     const angle = (2 * Math.PI * i) / particleCount;
     const dx = Math.round(Math.cos(angle) * distance);
     const dy = Math.round(Math.sin(angle) * distance);
+    const finalDy = dy + gravityDrop;
 
-    particles.push(
-      `    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#glow-${color})"
-      style="--dx:${dx}px;--dy:${dy}px;--drop:${gravityDrop}px;animation:${kf} ${loopDuration}s ${EASING.BURST} infinite"/>`
-    );
+    particles.push(`    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#glow-${color})" opacity="0">
+      <animateTransform attributeName="transform"
+                        type="translate"
+                        values="0 0;0 0;${dx} ${dy};${dx} ${finalDy};${dx} ${finalDy}"
+                        keyTimes="0;${explosionStart.toFixed(3)};${expandEnd.toFixed(3)};${droopEnd.toFixed(3)};1"
+                        calcMode="spline"
+                        keySplines="0 0 1 1;0 0.9 0.3 1;0.5 0 1 0.5;0 0 1 1"
+                        dur="${loopDuration}s" begin="0s"
+                        repeatCount="indefinite" />
+      <animate attributeName="opacity"
+               values="0;0;1;0.8;0;0"
+               keyTimes="0;${explosionStart.toFixed(3)};${((delay + 0.1) / loopDuration).toFixed(3)};${expandEnd.toFixed(3)};${droopEnd.toFixed(3)};1"
+               dur="${loopDuration}s" begin="0s"
+               repeatCount="indefinite" />
+      <animate attributeName="r"
+               values="${r};${r};${r};${Math.round(r * 0.5)};${Math.round(r * 0.25)};${Math.round(r * 0.25)}"
+               keyTimes="0;${explosionStart.toFixed(3)};${((delay + 0.1) / loopDuration).toFixed(3)};${expandEnd.toFixed(3)};${droopEnd.toFixed(3)};1"
+               dur="${loopDuration}s" begin="0s"
+               repeatCount="indefinite" />
+    </circle>`);
   }
 
-  return `<g${groupId} class="gravity-particles">
-  <style>@keyframes ${kf}{0%,${t0p}%{transform:translate(0,0);opacity:0}${t0p + 1}%{opacity:1}${t1p}%{transform:translate(var(--dx),var(--dy));opacity:.8}${t2p}%{transform:translate(var(--dx),calc(var(--dy) + var(--drop)));opacity:0}${fadeP}%{opacity:0}100%{opacity:0}}</style>
-${particles.join('\n')}
-  </g>`;
+  return `<g${groupId} class="gravity-particles">\n${particles.join('\n')}\n  </g>`;
 }
 
 export interface ShapedParticleConfig {
@@ -226,7 +294,7 @@ export interface ShapedParticleConfig {
 }
 
 /**
- * Generates particles at custom positions (Heart/Star shapes)
+ * Generates particles at custom positions (Heart/Star shapes) using SMIL
  */
 export function generateShapedParticles(config: ShapedParticleConfig): string {
   const {
@@ -234,25 +302,36 @@ export function generateShapedParticles(config: ShapedParticleConfig): string {
     loopDuration, id, initialRadius = 4,
   } = config;
   const groupId = id ? ` id="${id}"` : '';
-  const t0p = Math.round((delay / loopDuration) * 100);
-  const t1p = Math.round(((delay + duration) / loopDuration) * 100);
-  const fadeP = Math.min(t1p + 5, 99);
   const r = Math.round(initialRadius * 2.5);
-  const kf = `b-${t0p}-${t1p}`;
+
+  const explosionStart = delay / loopDuration;
+  const explosionEnd = (delay + duration) / loopDuration;
 
   const particles: string[] = [];
+
   for (let i = 0; i < positions.length; i++) {
     const { dx, dy } = positions[i];
-    particles.push(
-      `    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#glow-${color})"
-      style="--dx:${dx}px;--dy:${dy}px;animation:${kf} ${loopDuration}s ${EASING.BURST} infinite"/>`
-    );
+    const particleDelay = delay + (i * 0.02);
+    const pStart = particleDelay / loopDuration;
+
+    particles.push(`    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#glow-${color})" opacity="0">
+      <animateTransform attributeName="transform"
+                        type="translate"
+                        values="0 0;0 0;${dx} ${dy};${dx} ${dy}"
+                        keyTimes="0;${pStart.toFixed(3)};${explosionEnd.toFixed(3)};1"
+                        calcMode="spline"
+                        keySplines="0 0 1 1;0 0.9 0.3 1;0 0 1 1"
+                        dur="${loopDuration}s" begin="0s"
+                        repeatCount="indefinite" />
+      <animate attributeName="opacity"
+               values="0;0;1;0;0"
+               keyTimes="0;${pStart.toFixed(3)};${((particleDelay + 0.08) / loopDuration).toFixed(3)};${explosionEnd.toFixed(3)};1"
+               dur="${loopDuration}s" begin="0s"
+               repeatCount="indefinite" />
+    </circle>`);
   }
 
-  return `<g${groupId} class="shaped-particles">
-  <style>@keyframes ${kf}{0%,${t0p}%{transform:translate(0,0);opacity:0}${t0p + 1}%{opacity:1}${t1p}%{transform:translate(var(--dx),var(--dy));opacity:.7}${fadeP}%{opacity:0}100%{opacity:0}}</style>
-${particles.join('\n')}
-  </g>`;
+  return `<g${groupId} class="shaped-particles">\n${particles.join('\n')}\n  </g>`;
 }
 
 export interface ReflectionConfig {
@@ -269,7 +348,7 @@ export interface ReflectionConfig {
 }
 
 /**
- * Generates water reflection effect (Suwa Lake style)
+ * Generates water reflection effect (Suwa Lake style) using SMIL
  */
 export function generateReflectionPoints(config: ReflectionConfig): string {
   const {
@@ -277,15 +356,15 @@ export function generateReflectionPoints(config: ReflectionConfig): string {
     duration, delay, loopDuration, id,
   } = config;
   const groupId = id ? ` id="${id}"` : '';
-  const reflectionY = waterY + 15;
-  const t0p = Math.round((delay / loopDuration) * 100);
-  const t1p = Math.round(((delay + duration) / loopDuration) * 100);
-  const fadeP = Math.min(t1p + 5, 99);
   const r = 10;
-  const kf = `b-${t0p}-${t1p}`;
+
+  const reflectionY = waterY + 15;
+  const explosionStart = delay / loopDuration;
+  const explosionEnd = (delay + duration) / loopDuration;
 
   const reflections: string[] = [];
   const reflectionCount = Math.floor(particleCount / 2);
+
   for (let i = 0; i < reflectionCount; i++) {
     const angle = Math.PI * (0.2 + (i / reflectionCount) * 0.6);
     const dx = Math.round(Math.cos(angle) * distance * 0.9);
@@ -293,14 +372,20 @@ export function generateReflectionPoints(config: ReflectionConfig): string {
     const particleY = reflectionY + yOffset;
     const driftY = Math.round(Math.sin(angle) * distance * 0.15);
 
-    reflections.push(
-      `    <circle cx="${cx}" cy="${particleY}" r="${r}" fill="url(#glow-${color})"
-      style="--dx:${dx}px;--dy:${driftY}px;animation:${kf} ${loopDuration}s ${EASING.BURST} infinite"/>`
-    );
+    reflections.push(`    <circle cx="${cx}" cy="${particleY}" r="${r}" fill="url(#glow-${color})" opacity="0">
+      <animateTransform attributeName="transform"
+                        type="translate"
+                        values="0 0;0 0;${dx} ${driftY};${dx} ${driftY}"
+                        keyTimes="0;${explosionStart.toFixed(3)};${explosionEnd.toFixed(3)};1"
+                        dur="${loopDuration}s" begin="0s"
+                        repeatCount="indefinite" />
+      <animate attributeName="opacity"
+               values="0;0;1;0.6;0;0"
+               keyTimes="0;${explosionStart.toFixed(3)};${((delay + 0.15) / loopDuration).toFixed(3)};${((delay + duration * 0.5) / loopDuration).toFixed(3)};${explosionEnd.toFixed(3)};1"
+               dur="${loopDuration}s" begin="0s"
+               repeatCount="indefinite" />
+    </circle>`);
   }
 
-  return `<g${groupId} class="water-reflection" opacity="1.0">
-  <style>@keyframes ${kf}{0%,${t0p}%{transform:translate(0,0);opacity:0}${t0p + 1}%{opacity:1}${t1p}%{transform:translate(var(--dx),var(--dy));opacity:.7}${fadeP}%{opacity:0}100%{opacity:0}}</style>
-${reflections.join('\n')}
-  </g>`;
+  return `<g${groupId} class="water-reflection" opacity="1.0">\n${reflections.join('\n')}\n  </g>`;
 }

@@ -81,7 +81,7 @@ describe('SVG Generator Structure Tests', () => {
       expect(svg).not.toContain('firework-matsuri-level-');
     });
 
-    it('higher levels should have more particle elements', () => {
+    it('higher levels should have more SMIL animate elements', () => {
       const level1Svg = generateFireworksSVG({
         username: 'testuser',
         commits: 3,
@@ -102,11 +102,11 @@ describe('SVG Generator Structure Tests', () => {
         theme: 'kata',
       });
 
-      const level1Particles = (level1Svg.match(/animation:b-/g) || []).length;
-      const level5Particles = (level5Svg.match(/animation:b-/g) || []).length;
+      const level1Animates = (level1Svg.match(/<animate /g) || []).length;
+      const level5Animates = (level5Svg.match(/<animate /g) || []).length;
 
-      // Level 5 should have more particles than level 1
-      expect(level5Particles).toBeGreaterThan(level1Particles);
+      // Level 5 should have more animate elements than level 1
+      expect(level5Animates).toBeGreaterThan(level1Animates);
     });
   });
 
@@ -240,8 +240,8 @@ describe('SVG Generator Structure Tests', () => {
     });
   });
 
-  describe('CSS Animation Integration', () => {
-    it('should include <style> block with @keyframes', () => {
+  describe('Hybrid Animation Architecture', () => {
+    it('should include <style> block with @keyframes for stars and Niagara', () => {
       const svg = generateFireworksSVG({
         username: 'test', commits: 10, level: 3,
         levelName: 'Test', width: 400, height: 200, theme: 'kata',
@@ -259,15 +259,14 @@ describe('SVG Generator Structure Tests', () => {
       expect(svg).toContain('id="glow-');
     });
 
-    it('should have zero SMIL animate elements for all levels', () => {
+    it('should use SMIL animate elements for firework motion', () => {
       for (const theme of ['kata', 'matsuri'] as const) {
         for (const level of [1, 2, 3, 4, 5] as const) {
           const svg = generateFireworksSVG({
             username: 'test', commits: level * 7, level,
             levelName: 'Test', width: 400, height: 200, theme,
           });
-          expect(svg).not.toContain('<animate ');
-          expect(svg).not.toContain('<animateTransform');
+          expect(svg).toContain('<animate ');
         }
       }
     });

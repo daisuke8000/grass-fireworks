@@ -1,14 +1,9 @@
-import { EASING } from '../constants';
-
 /**
  * Generates the centralized <style> block for SVG animations.
  *
- * Only STATIC keyframes are defined here (twinkle, flow).
- * Dynamic keyframes (rise, burst, burst-gravity, fade-out) are generated
- * inline by each particle generator with timing baked into static percentages.
- *
- * CSS custom properties (--dx, --dy, --rise-y, --drop) are used in keyframe
- * VALUES (which is valid CSS), not in keyframe SELECTORS (which is invalid).
+ * Only STATIC keyframes are defined here (twinkle for stars, flow for Niagara).
+ * All firework motion uses SMIL <animate> / <animateTransform> elements
+ * which are generated inline by each particle function.
  */
 export function generateAnimationStyles(): string {
   return `<style>
@@ -24,9 +19,3 @@ export function generateAnimationStyles(): string {
   .stream { animation: flow var(--flow-dur, 0.7s) linear var(--delay, 0s) infinite; }
 </style>`;
 }
-
-/**
- * Exported easing values for use in inline animation shorthand.
- * Particle generators use these directly in style="animation: name dur EASING infinite"
- */
-export { EASING };

@@ -1,22 +1,24 @@
 import { describe, it, expect } from 'vitest';
 import { generateBackgroundFireworks, generateNiagaraEffect } from '../src/generators/parts/effects';
 
-describe('generateBackgroundFireworks (CSS)', () => {
-  it('outputs inline CSS animation instead of SMIL', () => {
+describe('generateBackgroundFireworks (SMIL)', () => {
+  it('outputs SMIL animation with glow gradients', () => {
     const result = generateBackgroundFireworks({
       canvasWidth: 400, canvasHeight: 200, count: 3, loopDuration: 4.0,
     });
-    expect(result).toContain('animation:r-');
-    expect(result).toContain('animation:b-');
-    expect(result).not.toContain('<animate');
-    expect(result).not.toContain('<animateTransform');
+    expect(result).toContain('<animate');
+    expect(result).toContain('<animateTransform');
+    expect(result).toContain('fill="url(#glow-');
+    expect(result).toContain('stroke="url(#glow-');
   });
 
-  it('uses glow gradient fills', () => {
+  it('uses glow gradient fills, not filters', () => {
     const result = generateBackgroundFireworks({
       canvasWidth: 400, canvasHeight: 200, count: 2, loopDuration: 4.0,
     });
     expect(result).toContain('fill="url(#glow-');
+    expect(result).not.toContain('filter=');
+    expect(result).not.toContain('fireworkGlow');
   });
 });
 

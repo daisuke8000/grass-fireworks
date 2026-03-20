@@ -9,25 +9,25 @@ import {
 
 const config = { canvasWidth: 400, canvasHeight: 200 };
 
-describe('Kata levels (CSS)', () => {
+describe('Kata levels (SMIL + glow gradient)', () => {
   it.each([
     ['L1', generateKataLevel1],
     ['L2', generateKataLevel2],
     ['L3', generateKataLevel3],
     ['L4', generateKataLevel4],
     ['L5', generateKataLevel5],
-  ] as const)('%s has no SMIL and no glow filter', (_name, fn) => {
+  ] as const)('%s uses SMIL animate and has no glow filter', (_name, fn) => {
     const result = fn(config);
-    expect(result).not.toContain('<animate');
-    expect(result).not.toContain('<animateTransform');
+    expect(result).toContain('<animate');
     expect(result).not.toContain('fireworkGlow');
     expect(result).not.toContain('<filter');
   });
 
   it('L1 uses reduced particle count (8)', () => {
     const result = generateKataLevel1(config);
-    const particles = (result.match(/animation:b-/g) || []).length;
-    expect(particles).toBe(8);
+    const particles = (result.match(/<circle /g) || []).length;
+    // 8 burst particles + 1 spark = 9 circles
+    expect(particles).toBe(9);
   });
 
   it('L5 uses glow gradient fills', () => {

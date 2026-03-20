@@ -10,17 +10,16 @@ import {
 
 const config = { canvasWidth: 400, canvasHeight: 200 };
 
-describe('Matsuri levels (CSS)', () => {
+describe('Matsuri levels (SMIL + glow gradient)', () => {
   it.each([
     ['L1', generateMatsuriLevel1],
     ['L2', generateMatsuriLevel2],
     ['L3', generateMatsuriLevel3],
     ['L4', generateMatsuriLevel4],
     ['L5', generateMatsuriLevel5],
-  ] as const)('%s has no SMIL and no glow filter', (_name, fn) => {
+  ] as const)('%s uses SMIL animate and has no glow filter', (_name, fn) => {
     const result = fn(config);
-    expect(result).not.toContain('<animate');
-    expect(result).not.toContain('<animateTransform');
+    expect(result).toContain('<animate');
     expect(result).not.toContain('fireworkGlow');
     expect(result).not.toContain('<filter');
   });
@@ -30,10 +29,10 @@ describe('Matsuri levels (CSS)', () => {
     expect(result).toContain('fill="url(#glow-orange)"');
   });
 
-  it('L5 has core flash and ring waves as CSS animation', () => {
+  it('L5 has core flash and ring waves with SMIL', () => {
     const result = generateMatsuriLevel5(config);
-    expect(result).toContain('animation:sp-');
     expect(result).toContain('matsuri5-core-flash');
     expect(result).toContain('matsuri5-ring-wave');
+    expect(result).toContain('<animate');
   });
 });
