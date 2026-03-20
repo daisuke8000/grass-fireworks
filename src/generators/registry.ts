@@ -29,6 +29,8 @@ import {
 export interface LevelConfig {
   canvasWidth: number;
   canvasHeight: number;
+  /** Seed for position randomization (e.g., from username) */
+  seed?: number;
 }
 
 /**

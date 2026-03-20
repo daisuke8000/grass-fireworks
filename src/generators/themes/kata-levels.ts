@@ -17,25 +17,47 @@ import {
   generateThemeParticles,
   type FireworkColorName,
 } from '../svg-firework-parts';
+import { createSeededRandom } from '../../utils/random';
 
 export interface KataLevelConfig {
   canvasWidth: number;
   canvasHeight: number;
+  seed?: number;
 }
 
 const TRAIL_DURATION = 0.6;
+
+/**
+ * Applies seeded random offset to a base X position ratio (0-1).
+ * Keeps the firework within safe bounds (10%-90% of canvas width).
+ */
+function jitterX(baseRatio: number, random: () => number, canvasWidth: number, amount = 0.08): number {
+  const offset = (random() - 0.5) * 2 * amount;
+  const ratio = Math.max(0.1, Math.min(0.9, baseRatio + offset));
+  return Math.round(canvasWidth * ratio);
+}
+
+/**
+ * Applies seeded random offset to a base Y position ratio.
+ */
+function jitterY(baseRatio: number, random: () => number, canvasHeight: number, amount = 0.06): number {
+  const offset = (random() - 0.5) * 2 * amount;
+  const ratio = Math.max(0.15, Math.min(0.55, baseRatio + offset));
+  return Math.round(canvasHeight * ratio);
+}
 
 /**
  * Level 1: 和火 (Wabi)
  * Traditional red-orange emotional firework, slow and gentle
  */
 export function generateKataLevel1(config: KataLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 1 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 4.0;
 
-  const x = Math.round(canvasWidth * 0.5);
+  const x = jitterX(0.5, random, canvasWidth);
   const startY = canvasHeight;
-  const explosionY = Math.round(canvasHeight * 0.38);
+  const explosionY = jitterY(0.38, random, canvasHeight);
   const explosionDelay = TRAIL_DURATION;
 
   const trail = generateThemeTrail({
@@ -76,7 +98,8 @@ export function generateKataLevel1(config: KataLevelConfig): string {
  * Quick-blooming circular burst, bright and vibrant
  */
 export function generateKataLevel2(config: KataLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 2 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 3.5;
 
   const fireworks = [
@@ -85,13 +108,13 @@ export function generateKataLevel2(config: KataLevelConfig): string {
   ];
 
   const startY = canvasHeight;
-  const explosionY = Math.round(canvasHeight * 0.35);
+  const explosionY = jitterY(0.35, random, canvasHeight);
 
   const elements: string[] = [];
 
   for (let i = 0; i < fireworks.length; i++) {
     const fw = fireworks[i];
-    const x = Math.round(canvasWidth * fw.pos);
+    const x = jitterX(fw.pos, random, canvasWidth);
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
     elements.push(generateThemeTrail({
@@ -131,7 +154,8 @@ export function generateKataLevel2(config: KataLevelConfig): string {
  * Rotating spinning particles, dynamic movement
  */
 export function generateKataLevel3(config: KataLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 3 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 4.0;
 
   const fireworks = [
@@ -141,13 +165,13 @@ export function generateKataLevel3(config: KataLevelConfig): string {
   ];
 
   const startY = canvasHeight;
-  const explosionY = Math.round(canvasHeight * 0.35);
+  const explosionY = jitterY(0.35, random, canvasHeight);
 
   const elements: string[] = [];
 
   for (let i = 0; i < fireworks.length; i++) {
     const fw = fireworks[i];
-    const x = Math.round(canvasWidth * fw.pos);
+    const x = jitterX(fw.pos, random, canvasWidth);
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
     elements.push(generateThemeTrail({
@@ -187,7 +211,8 @@ export function generateKataLevel3(config: KataLevelConfig): string {
  * Gold trails with gravity effect, elegant drooping
  */
 export function generateKataLevel4(config: KataLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 4 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 4.5;
 
   const fireworks = [
@@ -199,13 +224,13 @@ export function generateKataLevel4(config: KataLevelConfig): string {
   ];
 
   const startY = canvasHeight;
-  const baseExplosionY = Math.round(canvasHeight * 0.32);
+  const baseExplosionY = jitterY(0.32, random, canvasHeight);
 
   const elements: string[] = [];
 
   for (let i = 0; i < fireworks.length; i++) {
     const fw = fireworks[i];
-    const x = Math.round(canvasWidth * fw.pos);
+    const x = jitterX(fw.pos, random, canvasWidth);
     const explosionY = baseExplosionY + fw.yOffset;
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
@@ -246,12 +271,13 @@ export function generateKataLevel4(config: KataLevelConfig): string {
  * Gold/silver main burst + multiple small secondary bursts
  */
 export function generateKataLevel5(config: KataLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 5 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 5.0;
 
-  const centerX = Math.round(canvasWidth * 0.5);
+  const centerX = jitterX(0.5, random, canvasWidth);
   const startY = canvasHeight;
-  const mainExplosionY = Math.round(canvasHeight * 0.30);
+  const mainExplosionY = jitterY(0.30, random, canvasHeight);
   const mainExplosionDelay = TRAIL_DURATION;
 
   // Main gold trail
@@ -309,7 +335,7 @@ export function generateKataLevel5(config: KataLevelConfig): string {
   const surroundingElements: string[] = [];
   for (let i = 0; i < surroundingFireworks.length; i++) {
     const fw = surroundingFireworks[i];
-    const x = Math.round(canvasWidth * fw.pos);
+    const x = jitterX(fw.pos, random, canvasWidth);
     const yOffset = (i % 2) * 15 - 5;
     const explosionY = mainExplosionY + yOffset;
     const explosionDelay = fw.delay + TRAIL_DURATION;

@@ -21,10 +21,24 @@ import {
   getStarPositions,
   type FireworkColorName,
 } from '../svg-firework-parts';
+import { createSeededRandom } from '../../utils/random';
 
 export interface MatsuriLevelConfig {
   canvasWidth: number;
   canvasHeight: number;
+  seed?: number;
+}
+
+function jitterX(baseRatio: number, random: () => number, canvasWidth: number, amount = 0.08): number {
+  const offset = (random() - 0.5) * 2 * amount;
+  const ratio = Math.max(0.1, Math.min(0.9, baseRatio + offset));
+  return Math.round(canvasWidth * ratio);
+}
+
+function jitterY(baseRatio: number, random: () => number, canvasHeight: number, amount = 0.06): number {
+  const offset = (random() - 0.5) * 2 * amount;
+  const ratio = Math.max(0.15, Math.min(0.55, baseRatio + offset));
+  return Math.round(canvasHeight * ratio);
 }
 
 const TRAIL_DURATION = 0.6;
@@ -34,12 +48,13 @@ const TRAIL_DURATION = 0.6;
  * Gentle sparkling particles that slowly fade
  */
 export function generateMatsuriLevel1(config: MatsuriLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 11 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 5.0;
 
-  const x = Math.round(canvasWidth * 0.5);
+  const x = jitterX(0.5, random, canvasWidth);
   const startY = canvasHeight;
-  const explosionY = Math.round(canvasHeight * 0.40);
+  const explosionY = jitterY(0.40, random, canvasHeight);
   const explosionDelay = TRAIL_DURATION;
 
   const trail = generateThemeTrail({
@@ -122,14 +137,15 @@ function generateSparklerEffect(config: {
  * Heart and star shaped fireworks
  */
 export function generateMatsuriLevel2(config: MatsuriLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 12 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 4.0;
 
   const startY = canvasHeight;
-  const explosionY = Math.round(canvasHeight * 0.35);
+  const explosionY = jitterY(0.35, random, canvasHeight);
 
   // Heart-shaped firework (left)
-  const heartX = Math.round(canvasWidth * 0.35);
+  const heartX = jitterX(0.35, random, canvasWidth);
   const heartPositions = getHeartPositions(20, 2.5);
   const heartDelay = 0;
   const heartExplosionDelay = heartDelay + TRAIL_DURATION;
@@ -161,7 +177,7 @@ export function generateMatsuriLevel2(config: MatsuriLevelConfig): string {
   });
 
   // Star-shaped firework (right)
-  const starX = Math.round(canvasWidth * 0.65);
+  const starX = jitterX(0.65, random, canvasWidth);
   const starPositions = getStarPositions(20, 50, 25);
   const starDelay = 0.6;
   const starExplosionDelay = starDelay + TRAIL_DURATION;
@@ -207,7 +223,8 @@ export function generateMatsuriLevel2(config: MatsuriLevelConfig): string {
  * Starmine rapid-fire competition style
  */
 export function generateMatsuriLevel3(config: MatsuriLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 13 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 3.5;
 
   const fireworks = [
@@ -221,13 +238,13 @@ export function generateMatsuriLevel3(config: MatsuriLevelConfig): string {
   ];
 
   const startY = canvasHeight;
-  const baseExplosionY = Math.round(canvasHeight * 0.32);
+  const baseExplosionY = jitterY(0.32, random, canvasHeight);
 
   const elements: string[] = [];
 
   for (let i = 0; i < fireworks.length; i++) {
     const fw = fireworks[i];
-    const x = Math.round(canvasWidth * fw.pos);
+    const x = jitterX(fw.pos, random, canvasWidth);
     const yOffset = (i % 3) * 8 - 8;
     const explosionY = baseExplosionY + yOffset;
     const explosionDelay = fw.delay + TRAIL_DURATION * 0.8;
@@ -270,7 +287,8 @@ export function generateMatsuriLevel3(config: MatsuriLevelConfig): string {
  * Water reflection fireworks (lightweight version)
  */
 export function generateMatsuriLevel4(config: MatsuriLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 14 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 4.5;
   const waterY = Math.round(canvasHeight * 0.75);
 
@@ -281,7 +299,7 @@ export function generateMatsuriLevel4(config: MatsuriLevelConfig): string {
   ];
 
   const startY = waterY - 10;
-  const baseExplosionY = Math.round(canvasHeight * 0.35);
+  const baseExplosionY = jitterY(0.35, random, canvasHeight);
 
   const waterGradient = generateWaterGradient();
   const waterSurface = generateWaterSurface(canvasWidth, waterY);
@@ -289,7 +307,7 @@ export function generateMatsuriLevel4(config: MatsuriLevelConfig): string {
 
   for (let i = 0; i < fireworks.length; i++) {
     const fw = fireworks[i];
-    const x = Math.round(canvasWidth * fw.pos);
+    const x = jitterX(fw.pos, random, canvasWidth);
     const explosionY = baseExplosionY + (i * 8);
     const explosionDelay = fw.delay + TRAIL_DURATION;
 
@@ -349,12 +367,13 @@ export function generateMatsuriLevel4(config: MatsuriLevelConfig): string {
  * Phoenix grand finale - majestic wide display
  */
 export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
-  const { canvasWidth, canvasHeight } = config;
+  const { canvasWidth, canvasHeight, seed = 15 } = config;
+  const random = createSeededRandom(seed);
   const loopInterval = 5.5;
 
-  const centerX = Math.round(canvasWidth * 0.5);
+  const centerX = jitterX(0.5, random, canvasWidth);
   const startY = canvasHeight;
-  const mainExplosionY = Math.round(canvasHeight * 0.28);
+  const mainExplosionY = jitterY(0.28, random, canvasHeight);
   const mainExplosionDelay = TRAIL_DURATION;
 
   // Main Phoenix firework (center)
@@ -436,7 +455,7 @@ export function generateMatsuriLevel5(config: MatsuriLevelConfig): string {
   const surroundingElements: string[] = [];
   for (let i = 0; i < surroundingFireworks.length; i++) {
     const fw = surroundingFireworks[i];
-    const x = Math.round(canvasWidth * fw.pos);
+    const x = jitterX(fw.pos, random, canvasWidth);
     const yOffset = (i % 3) * 10 - 5;
     const explosionY = mainExplosionY + yOffset;
     const explosionDelay = fw.delay + TRAIL_DURATION;

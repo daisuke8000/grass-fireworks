@@ -10,6 +10,7 @@
 import type { FireworksLevel } from '../services/fireworks-level';
 import type { ThemeName } from '../services/theme-selector';
 import { CANVAS } from '../constants';
+import { stringToSeed } from '../utils/random';
 import { generateNightSky } from './svg-background';
 import { generateUserOverlay } from './svg-overlay';
 import { generateFirework, type LevelConfig } from './registry';
@@ -44,11 +45,13 @@ function generateFireworkForLevel(
   level: FireworksLevel,
   width: number,
   height: number,
-  theme: ThemeName
+  theme: ThemeName,
+  seed?: number
 ): string {
   const config: LevelConfig = {
     canvasWidth: width,
     canvasHeight: height,
+    seed,
   };
 
   return generateFirework(theme, level, config);
@@ -80,7 +83,8 @@ export function generateFireworksSVG(config: FireworksSVGConfig): string {
 
   // Generate each layer
   const nightSky = generateNightSky({ level, username, width, height });
-  const fireworks = generateFireworkForLevel(level, width, height, theme ?? 'kata');
+  const seed = stringToSeed(username);
+  const fireworks = generateFireworkForLevel(level, width, height, theme ?? 'kata', seed);
   const overlay = generateUserOverlay({ username, commits, levelName, width, height, isExtra });
 
   // Background fireworks for levels 1-5 (more for higher levels)
