@@ -7,6 +7,8 @@ import {
   animateTransform,
   toKeyTime,
   toKeyTimes,
+  cssVars,
+  particleStyle,
 } from '../src/utils/svg-helpers';
 
 describe('svg-helpers', () => {
@@ -159,5 +161,28 @@ describe('svg-helpers', () => {
       expect(result[1]).toBe(0.99);
       expect(result[2]).toBe(1);
     });
+  });
+});
+
+describe('cssVars', () => {
+  it('generates inline CSS custom properties string', () => {
+    const result = cssVars({ dx: '30px', dy: '-25px', t0: '0.15' });
+    expect(result).toBe('--dx:30px;--dy:-25px;--t0:0.15');
+  });
+
+  it('handles numeric values', () => {
+    const result = cssVars({ dur: '4s', delay: '0.5s' });
+    expect(result).toBe('--dur:4s;--delay:0.5s');
+  });
+});
+
+describe('particleStyle', () => {
+  it('generates style attribute with direction and timing', () => {
+    const result = particleStyle({ dx: 30, dy: -25, t0: 0.15, t1: 0.45, dur: 4 });
+    expect(result).toContain('--dx:30px');
+    expect(result).toContain('--dy:-25px');
+    expect(result).toContain('--t0:0.15');
+    expect(result).toContain('--t1:0.45');
+    expect(result).toContain('--dur:4s');
   });
 });
